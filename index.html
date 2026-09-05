@@ -1,0 +1,678 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>旅の50文</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,400;7..72,600&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<style>
+  :root{
+    --paper:#F3F6F8;
+    --surface:#FFFFFF;
+    --ink:#16324F;
+    --ink-soft:#5F7894;
+    --line:#DAE3EC;
+    --seal:#C0392B;
+    --seal-ink:#FFFFFF;
+    --shadow:0 1px 2px rgba(22,50,79,.06), 0 8px 24px rgba(22,50,79,.07);
+    --jp:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",system-ui,sans-serif;
+    --en:"Literata",Georgia,"Times New Roman",serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#0D1926; --surface:#16283B; --ink:#E6EDF5; --ink-soft:#8CA6C0;
+      --line:#26405A; --seal:#E4644D; --seal-ink:#0D1926;
+      --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#0D1926; --surface:#16283B; --ink:#E6EDF5; --ink-soft:#8CA6C0;
+    --line:#26405A; --seal:#E4644D; --seal-ink:#0D1926;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+  }
+
+  *{box-sizing:border-box}
+  [hidden]{display:none !important}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--jp);line-height:1.7;
+       -webkit-font-smoothing:antialiased;padding:0 16px 40px}
+  .wrap{max-width:430px;margin:0 auto;display:flex;flex-direction:column;gap:22px;padding-top:18px}
+
+  header{display:flex;flex-direction:column;gap:9px}
+  .brandrow{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+  .brand{font-size:17px;font-weight:700;letter-spacing:.06em;margin:0}
+  .stock{font-family:var(--en);font-variant-numeric:tabular-nums;font-size:15px;color:var(--ink-soft)}
+  .stock b{color:var(--seal);font-weight:600;font-size:19px}
+  .meter{height:3px;background:var(--line);border-radius:2px;overflow:hidden}
+  .meter i{display:block;height:100%;background:var(--seal);width:0;transition:width .5s cubic-bezier(.2,.7,.3,1)}
+  .tagline{font-size:12px;color:var(--ink-soft);letter-spacing:.04em;margin:0}
+
+  .screen{display:flex;flex-direction:column;gap:22px}
+  .screen[hidden]{display:none}
+  .panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px;box-shadow:var(--shadow)}
+  .label{font-size:11px;letter-spacing:.16em;color:var(--ink-soft);text-transform:uppercase;font-weight:500;margin:0}
+
+  button{font-family:var(--jp);font-size:15px;cursor:pointer;border-radius:11px;
+         transition:transform .12s ease,background .15s ease,border-color .15s ease}
+  button:focus-visible{outline:2px solid var(--seal);outline-offset:2px}
+  button:active{transform:translateY(1px)}
+  button[disabled]{opacity:.38;cursor:default;transform:none}
+  .btn-main{background:var(--ink);color:var(--paper);border:1px solid var(--ink);padding:15px 18px;font-weight:700;letter-spacing:.05em;width:100%}
+  .btn-seal{background:var(--seal);color:var(--seal-ink);border:1px solid var(--seal);padding:15px 18px;font-weight:700;letter-spacing:.05em;width:100%}
+  .btn-quiet{background:transparent;color:var(--ink);border:1px solid var(--line);padding:12px 16px;font-weight:500;width:100%}
+  .btn-text{background:none;border:none;color:var(--ink-soft);font-size:13px;padding:8px;text-decoration:underline;text-underline-offset:3px}
+  .row{display:flex;gap:9px}
+  .row>*{flex:1}
+
+  .visa{display:grid;grid-template-columns:repeat(10,1fr);gap:6px}
+  .slot{aspect-ratio:1;border-radius:50%;display:grid;place-items:center;font-family:var(--en);font-size:9px;font-variant-numeric:tabular-nums}
+  .slot.empty{border:1px dashed var(--line);color:transparent}
+  .slot.done{background:var(--seal);color:var(--seal-ink);border:1px solid var(--seal);font-weight:600}
+  .visa-cap{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:13px}
+
+  .progress-dots{display:flex;gap:5px}
+  .progress-dots span{height:3px;flex:1;background:var(--line);border-radius:2px}
+  .progress-dots span.on{background:var(--ink-soft)}
+  .scene{font-size:11px;letter-spacing:.16em;color:var(--seal);font-weight:700;margin:0 0 10px}
+  .situation{font-size:19px;font-weight:500;line-height:1.65;margin:0;text-wrap:balance}
+  .hidden-note{font-size:12.5px;color:var(--ink-soft);margin:14px 0 0}
+
+  /* ---- マイク判定 ---- */
+  .listening{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--seal);margin-right:8px;animation:pulse 1s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+  .heard{font-family:var(--en);color:var(--ink-soft)}
+  .tries{display:flex;gap:7px;justify-content:center;margin-top:6px}
+  .tries i{width:9px;height:9px;border-radius:50%;border:1.5px solid var(--line);display:block}
+  .tries i.miss{background:var(--line)}
+  .tries i.hit{background:var(--seal);border-color:var(--seal)}
+  .stat{font-family:var(--en);font-size:13px;color:var(--ink-soft);margin:0;font-variant-numeric:tabular-nums}
+  .blocker{margin-top:16px;padding:13px 15px;border:1.5px solid var(--seal);border-radius:12px;font-size:13.5px;line-height:1.7}
+  .blocker b{color:var(--seal)}
+
+  .answer{border-top:1px solid var(--line);margin-top:18px;padding-top:18px;display:flex;flex-direction:column;gap:10px}
+  .en{font-family:var(--en);font-size:27px;line-height:1.35;margin:0;text-wrap:balance}
+  .mean{font-size:14px;color:var(--ink-soft);margin:0}
+  .tip{font-size:13.5px;margin:4px 0 0;padding:11px 13px;background:var(--paper);border-left:2px solid var(--seal);border-radius:0 7px 7px 0}
+  .tip b{font-weight:700}
+  .peek{font-family:var(--en);font-size:21px;margin:14px 0 0;color:var(--ink-soft)}
+
+  .verdict{display:flex;align-items:center;gap:13px;min-height:26px;margin-top:12px}
+  .verdict p{margin:0;font-size:14px}
+
+  .seal-mark{width:58px;height:58px;flex:0 0 58px;border-radius:50%;
+    border:2.5px solid var(--seal);color:var(--seal);display:grid;place-items:center;
+    font-family:var(--en);font-weight:600;font-size:11px;line-height:1.1;text-align:center;transform:rotate(-9deg)}
+  .seal-mark.land{animation:land .45s cubic-bezier(.2,1.5,.4,1) both}
+  @keyframes land{
+    0%{transform:rotate(-26deg) scale(2.1);opacity:0}
+    60%{opacity:1}
+    100%{transform:rotate(-9deg) scale(1);opacity:1}
+  }
+  @media (prefers-reduced-motion: reduce){*{animation:none !important;transition:none !important}}
+
+  .big{font-family:var(--en);font-size:52px;font-weight:600;color:var(--seal);line-height:1;margin:0;font-variant-numeric:tabular-nums}
+  .done-body{display:flex;flex-direction:column;gap:6px;align-items:center;text-align:center;padding:8px 0}
+  footer{font-size:11.5px;color:var(--ink-soft);text-align:center;line-height:1.8}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="brandrow">
+      <h1 class="brand">旅の50文</h1>
+      <span class="stock"><b id="stockN">0</b> / 50 言える</span>
+    </div>
+    <div class="meter"><i id="meterFill"></i></div>
+    <p class="tagline">聞く → 言う → 通じて、迷わなければ判子。</p>
+  </header>
+
+  <section class="screen" id="scHome">
+    <div class="panel">
+      <div class="visa-cap">
+        <p class="label">査証欄</p>
+        <p class="label" id="visaHint">まだ空です</p>
+      </div>
+      <div class="visa" id="visa"></div>
+    </div>
+    <button class="btn-seal" id="startBtn">今日の5枚をはじめる</button>
+    <p class="tagline" id="homeNote" style="text-align:center"></p>
+  </section>
+
+  <section class="screen" id="scCard" hidden>
+    <div class="progress-dots" id="dots"></div>
+
+    <div class="panel">
+      <p class="scene" id="scene"></p>
+      <p class="situation" id="situation"></p>
+
+      <div id="stageListen">
+        <p class="hidden-note" id="stageNote">まず耳で覚えます。英文はまだ出しません。</p>
+        <div class="row" style="margin-top:16px">
+          <button class="btn-main" id="playBtn">聞く</button>
+          <button class="btn-quiet" id="slowBtn" disabled>ゆっくり</button>
+        </div>
+        <p class="peek" id="peek" hidden></p>
+        <div style="margin-top:9px">
+          <button class="btn-seal" id="sayBtn" disabled>言ってみる</button>
+        </div>
+        <div class="verdict" id="verdict"></div>
+        <div class="tries" id="tries"></div>
+        <div class="blocker" id="blocker" hidden></div>
+        <div style="display:flex;justify-content:center;margin-top:4px">
+          <button class="btn-text" id="revealBtn">英文を見る</button>
+        </div>
+      </div>
+
+      <div class="answer" id="answer" hidden>
+        <div class="verdict" id="answerVerdict" style="margin-top:0"></div>
+        <p class="en" id="enText"></p>
+        <p class="mean" id="meanText"></p>
+        <p class="stat" id="stat"></p>
+        <p class="tip" id="tipText"></p>
+        <div class="row" style="margin-top:8px">
+          <button class="btn-quiet" id="replayBtn">もう一度聞く</button>
+          <button class="btn-main" id="nextBtn">次へ</button>
+        </div>
+      </div>
+    </div>
+    <button class="btn-text" id="quitBtn">今日はここまでにする</button>
+  </section>
+
+  <section class="screen" id="scDone" hidden>
+    <div class="panel done-body">
+      <p class="label">今日ふえた判子</p>
+      <p class="big" id="gained">0</p>
+      <p class="stat" id="doneStat"></p>
+      <p class="mean" id="doneMsg" style="margin-top:6px"></p>
+    </div>
+    <button class="btn-main" id="backBtn">査証欄を見る</button>
+  </section>
+
+  <footer id="foot"></footer>
+</div>
+
+<script>
+/* ============================================================
+   旅の50文 — 海外旅行で使う50文を、口の在庫にする
+   判子の条件: 音声認識で「通じた」 かつ 声が出るまで2.5秒以内（迷っていない）
+   ============================================================ */
+
+const PHRASES = [
+ {s:"機内",j:"飲み物を聞かれた。水がほしい。",e:"Water, please.",m:"水をください。",t:"「ウォーター」より<b>ワラ</b>に近い。母音にはさまれたtはラ行になる。"},
+ {s:"機内",j:"食事はチキンかビーフか、と聞かれた。",e:"Chicken, please.",m:"チキンでお願いします。",t:"pleaseは「プリーズ」と伸ばしすぎず<b>プリーz</b>と軽く落とす。"},
+ {s:"機内",j:"通路を通りたい。前の人に声をかける。",e:"Excuse me.",m:"すみません。",t:"「エクスキューズミー」ではなく<b>クスキューzミ</b>。頭のEはほぼ聞こえない。"},
+ {s:"機内",j:"寒い。毛布がほしい。",e:"Can I have a blanket?",m:"毛布をもらえますか。",t:"Can I は切らずに<b>キャナイ</b>と1語のようにつなげる。"},
+ {s:"どこでも",j:"英語で話しかけられた。まず自分の状況を伝える。",e:"Sorry, I don't speak English.",m:"すみません、英語が話せません。",t:"don'tは<b>ドウン</b>。最後のtは飲み込んでよい。これが言えると相手が速度を落とす。"},
+ {s:"どこでも",j:"早口で聞き取れなかった。",e:"Could you say that again?",m:"もう一度言ってもらえますか。",t:"say that again を<b>セイザッアゲン</b>と1かたまりで。旅で一番使う1文。"},
+ {s:"どこでも",j:"まだ速い。ゆっくり話してほしい。",e:"Slowly, please.",m:"ゆっくりお願いします。",t:"oは「オ」ではなく<b>オウ</b>。「スロウリ」。"},
+ {s:"入国審査",j:"旅行の目的を聞かれた。",e:"Sightseeing.",m:"観光です。",t:"<b>サイ</b>トシーイング。最初を強く。文にしなくてよい。"},
+ {s:"入国審査",j:"何日滞在するか聞かれた。",e:"Five days.",m:"5日間です。",t:"daysの語尾は濁って<b>デイズ</b>。「デイス」だと伝わりにくい。"},
+ {s:"入国審査",j:"どこに泊まるか聞かれた。予約票を見せながら。",e:"This hotel.",m:"このホテルです。",t:"hotelは後ろが強い<b>ホテェル</b>。日本語と強弱が逆。"},
+ {s:"税関",j:"申告するものはあるか、と聞かれた。",e:"No, nothing.",m:"いいえ、何もありません。",t:"nothingのoは「オ」ではなく<b>ア</b>。「ナッシン」。"},
+ {s:"空港",j:"荷物受取所。自分のスーツケースが出てこない。",e:"My bag is missing.",m:"荷物が出てきません。",t:"missingの前でひと呼吸置くと、深刻さが伝わる。"},
+ {s:"カフェ",j:"コーヒーを2つ頼む。",e:"Two coffees, please.",m:"コーヒーを2つください。",t:"coffeeは<b>コーフィ</b>。最初を強く、後ろは軽く。"},
+ {s:"カフェ",j:"ショーケースを指さして注文する。",e:"This one, please.",m:"これをください。",t:"This one は<b>ディスワン</b>とつなげる。指さしと一緒に使えば万能。"},
+ {s:"カフェ",j:"店内で食べるか持ち帰るか聞かれた。",e:"To go, please.",m:"持ち帰りでお願いします。",t:"店内なら <b>For here, please.</b> 2つ セットで覚える。"},
+ {s:"カフェ",j:"注文の途中。もう頼むものはない。",e:"That's all.",m:"以上です。",t:"allは口を大きく開けて<b>オール</b>。これを言うと会計に進んでくれる。"},
+ {s:"食事",j:"席についた。メニューがほしい。",e:"Can I have the menu?",m:"メニューをもらえますか。",t:"menuは伸ばさず<b>メニュ</b>。Can I have 〜 は何にでも使える型。"},
+ {s:"食事",j:"何を頼めばいいか分からない。",e:"What do you recommend?",m:"おすすめは何ですか。",t:"What do you は潰して<b>ワッデュ</b>。丁寧に言おうとするほど伝わらない。"},
+ {s:"食事",j:"玉ねぎが苦手。抜いてほしい。",e:"No onions, please.",m:"玉ねぎ抜きでお願いします。",t:"onionは「オニオン」ではなく<b>アニャン</b>に近い。"},
+ {s:"食事",j:"水がほしい。",e:"Can I have some water?",m:"お水をいただけますか。",t:"someは弱く<b>サm</b>。強く言う必要のない単語は潰すのが英語の呼吸。"},
+ {s:"食事",j:"食べ終わった。会計をしたい。",e:"Check, please.",m:"お会計をお願いします。",t:"イギリスでは <b>Bill, please.</b> どちらもだいたい通じる。"},
+ {s:"食事",j:"店を出るとき、ひとこと伝える。",e:"It was delicious.",m:"おいしかったです。",t:"de<b>li</b>ciousの「リ」を強く。これを言うと店の空気が変わる。"},
+ {s:"買い物",j:"値札が見当たらない。値段を知りたい。",e:"How much is this?",m:"これはいくらですか。",t:"<b>ハウマチイz</b>と3語をつなげる。1語ずつ切ると逆に通じない。"},
+ {s:"買い物",j:"店員に声をかけられたが、まだ見ているだけ。",e:"I'm just looking.",m:"見ているだけです。",t:"justのtは言わなくてよい。<b>ジャス ルッキン</b>。"},
+ {s:"買い物",j:"同じ商品の黒がほしい。",e:"Do you have this in black?",m:"これの黒はありますか。",t:"Do you have は<b>ドゥユハv</b>。色や数を入れ替えれば何にでも効く型。"},
+ {s:"買い物",j:"服を試着したい。",e:"Can I try this on?",m:"試着できますか。",t:"try this on を切らずに1かたまりで<b>トライディスオン</b>。"},
+ {s:"買い物",j:"サイズが小さかった。",e:"Do you have a bigger one?",m:"もっと大きいのはありますか。",t:"biggerの「ガ」は軽く。smaller に入れ替えれば逆も言える。"},
+ {s:"買い物",j:"これを買うと決めた。",e:"I'll take this.",m:"これにします。",t:"I'llは「アイル」ではなく<b>アォ</b>に近い。ここが日本人の最大の難所。"},
+ {s:"買い物",j:"カードで払いたい。",e:"Can I pay by card?",m:"カードで払えますか。",t:"cardのrは巻きすぎず<b>カーd</b>。最後のdは軽く置くだけ。"},
+ {s:"買い物",j:"袋がほしい。",e:"Can I have a bag?",m:"袋をもらえますか。",t:"have a を<b>ハヴァ</b>とつなげる。これで一気に英語らしくなる。"},
+ {s:"ホテル",j:"フロントに着いた。",e:"Check in, please.",m:"チェックインをお願いします。",t:"Check in は<b>チェッキン</b>。kとiがつながる。"},
+ {s:"ホテル",j:"予約してあることを伝える。",e:"I have a reservation.",m:"予約しています。",t:"reser<b>va</b>tionの「ヴェイ」を強く。ここを外すと通じない。"},
+ {s:"ホテル",j:"名前を聞かれた。",e:"My name is Sato.",m:"佐藤です。",t:"name is を<b>ネイミz</b>とつなげる。名前は自分のものに置き換えて練習を。"},
+ {s:"ホテル",j:"朝食の時間を知りたい。",e:"What time is breakfast?",m:"朝食は何時ですか。",t:"breakfastは<b>ブレクファス</b>。最後のtは消える。"},
+ {s:"ホテル",j:"チェックアウト後、荷物を預けたい。",e:"Can I leave my bag here?",m:"荷物をここに置かせてもらえますか。",t:"leave my は<b>リーヴマイ</b>。vは下唇を軽く噛む。"},
+ {s:"ホテル",j:"Wi-Fiにつなぎたい。",e:"The Wi-Fi password, please.",m:"Wi-Fiのパスワードをお願いします。",t:"<b>パ</b>スワードと前を強く。文にしなくても十分通じる。"},
+ {s:"ホテル",j:"タオルがもう1枚ほしい。",e:"Can I have one more towel?",m:"タオルをもう1枚もらえますか。",t:"towelは<b>タウル</b>と2音で。「タオル」は3音になって通じにくい。"},
+ {s:"移動",j:"駅の場所が分からない。",e:"Where is the station?",m:"駅はどこですか。",t:"<b>ウェアリズァ</b>とつなげる。station を bus stop などに入れ替えられる。"},
+ {s:"移動",j:"歩いて行けるか知りたい。",e:"Is it far?",m:"遠いですか。",t:"Is it を<b>イジッ</b>とつなげる。3語でも1語のように。"},
+ {s:"移動",j:"タクシー。地図を見せて行き先を伝える。",e:"Can you take me here?",m:"ここまで行ってもらえますか。",t:"take me は<b>テイクミ</b>。画面を見せながらならこれで足りる。"},
+ {s:"移動",j:"タクシー。ここで降りたい。",e:"Stop here, please.",m:"ここで止めてください。",t:"Stopのtは息だけ。<b>スタッp</b>と短く切る。"},
+ {s:"移動",j:"分かれ道。どちらに行けばいいか分からない。",e:"Which way?",m:"どっちですか。",t:"<b>ウィッチウェイ</b>。2語で聞ける。指をさしながらが確実。"},
+ {s:"移動",j:"到着まで何分かかるか知りたい。",e:"How long does it take?",m:"どのくらいかかりますか。",t:"does it take を<b>ダズィッテイk</b>と潰す。丸ごと覚える型。"},
+ {s:"移動",j:"バス停で。空港行きか確かめたい。",e:"Does this bus go to the airport?",m:"このバスは空港に行きますか。",t:"go to the は軽く<b>ゴウトゥザ</b>。airportを強く言えば伝わる。"},
+ {s:"困ったとき",j:"どうしていいか分からない。誰かに頼る。",e:"Can you help me?",m:"助けてもらえますか。",t:"help me は<b>ヘウプミ</b>。lは舌を上につけて「ウ」に近い音。"},
+ {s:"困ったとき",j:"自分がどこにいるか分からなくなった。",e:"I'm lost.",m:"道に迷いました。",t:"lostは「ロスト」ではなく<b>ラスt</b>。2語で助けが来る強い1文。"},
+ {s:"困ったとき",j:"パスポートが見当たらない。",e:"I lost my passport.",m:"パスポートをなくしました。",t:"lost my は<b>ロスマイ</b>。tは消える。落ち着いてゆっくりでよい。"},
+ {s:"困ったとき",j:"トイレを借りたい。",e:"Can I use the bathroom?",m:"トイレを借りられますか。",t:"use the は<b>ユーzザ</b>。toiletより bathroom が自然な国が多い。"},
+ {s:"旅先で",j:"景色のいい場所。写真を撮ってほしい。",e:"Could you take our picture?",m:"写真を撮ってもらえますか。",t:"Could you は<b>クッジュ</b>。dとyがくっついてジュになる。"},
+ {s:"旅先で",j:"別れぎわに、ひとこと。",e:"Have a nice day.",m:"よい一日を。",t:"Have a を<b>ハヴァ</b>と1語に。これが自然に出れば旅の空気が良くなる。"}
+];
+
+const KEY='tabi50.v1';
+const DAY=86400000;
+const INTERVALS=[1*DAY,3*DAY,7*DAY,14*DAY,30*DAY];
+const MAX_TRIES=4;        // これを超えたら今日は見送り（明日また出る）
+const HESITATE_MS=2500;   // 声が出るまでこれ以上かかったら「迷い」
+const MATCH_MIN=0.6;      // 目標文の単語のうち、この割合が聞き取れたら「通じた」
+
+let state={cards:{},updatedAt:0};
+let session=null;
+let tries=0;
+let attemptToken=0;
+let rec=null;
+let micState='unknown';   // unknown | ok | blocked
+
+/* ---------- storage ---------- */
+function blankState(){
+  const c={};
+  for(let i=0;i<PHRASES.length;i++) c[i]={learned:false,box:0,due:0,seen:false};
+  return {cards:c,updatedAt:0};
+}
+function normalizeState(raw){
+  const base=blankState();
+  if(!raw||typeof raw!=='object'||!raw.cards) return base;
+  for(let i=0;i<PHRASES.length;i++){
+    const s=raw.cards[i];
+    if(s&&typeof s==='object'){
+      base.cards[i]={
+        learned:!!s.learned,
+        box:Math.max(0,Math.min(5,Number(s.box)||0)),
+        due:Number(s.due)||0,
+        seen:!!s.seen
+      };
+    }
+  }
+  base.updatedAt=Number(raw.updatedAt)||0;
+  return base;
+}
+function loadLocal(){
+  try{ return normalizeState(JSON.parse(localStorage.getItem(KEY))); }
+  catch(e){ return blankState(); }
+}
+function save(){
+  state.updatedAt=Date.now();
+  try{ localStorage.setItem(KEY,JSON.stringify(state)); }catch(e){}
+}
+
+/* ---------- 音声出力 ---------- */
+let voice=null;
+function pickVoice(){
+  if(!('speechSynthesis' in window)) return null;
+  const vs=speechSynthesis.getVoices();
+  if(!vs.length) return null;
+  const en=vs.filter(v=>/^en[-_]/i.test(v.lang));
+  if(!en.length) return null;
+  return en.find(v=>/samantha|google us english|aria|jenny/i.test(v.name))
+      || en.find(v=>/^en[-_]US/i.test(v.lang))
+      || en[0];
+}
+if('speechSynthesis' in window){
+  speechSynthesis.addEventListener('voiceschanged',()=>{voice=pickVoice();});
+  voice=pickVoice();
+}
+function speak(text,rate){
+  if(!('speechSynthesis' in window)) return false;
+  try{
+    speechSynthesis.cancel();
+    if(!voice) voice=pickVoice();
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang='en-US'; u.rate=rate; u.pitch=1;
+    if(voice) u.voice=voice;
+    speechSynthesis.speak(u);
+    return true;
+  }catch(e){ return false; }
+}
+function stopAudio(){
+  if('speechSynthesis' in window){ try{ speechSynthesis.cancel(); }catch(e){} }
+}
+
+/* ---------- 音声入力 ---------- */
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+
+function normalizeWords(s){
+  return s.toLowerCase().replace(/[^a-z0-9\s']/g,' ').replace(/\s+/g,' ').trim().split(' ').filter(Boolean);
+}
+function lev(a,b){
+  const m=a.length,n=b.length;
+  if(Math.abs(m-n)>2) return 3;
+  let prev=Array.from({length:n+1},(_,i)=>i),cur=new Array(n+1);
+  for(let i=1;i<=m;i++){
+    cur[0]=i;
+    for(let j=1;j<=n;j++){
+      cur[j]=Math.min(prev[j]+1,cur[j-1]+1,prev[j-1]+(a[i-1]===b[j-1]?0:1));
+    }
+    [prev,cur]=[cur,prev];
+  }
+  return prev[n];
+}
+// 「通じたか」で判定する。目標文の単語が、聞き取られた文にどれだけ含まれるか。
+function matchScore(said,target){
+  const pool=normalizeWords(said);
+  const want=normalizeWords(target);
+  if(!want.length) return 0;
+  let hit=0;
+  for(const w of want){
+    let idx=pool.indexOf(w);
+    if(idx<0 && w.length>3){
+      idx=pool.findIndex(x=>Math.abs(x.length-w.length)<=2 && lev(x,w)<=1);
+    }
+    if(idx>=0){ pool.splice(idx,1); hit++; }
+  }
+  return hit/want.length;
+}
+function esc(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+/* ---------- 出題順（Leitner） ---------- */
+function todayQueue(){
+  const now=Date.now();
+  const ids=Object.keys(state.cards).map(Number);
+  const reviews=ids.filter(i=>state.cards[i].seen&&state.cards[i].due<=now)
+                   .sort((a,b)=>state.cards[a].due-state.cards[b].due);
+  const fresh=ids.filter(i=>!state.cards[i].seen);
+  const q=reviews.slice(0,3);
+  for(const i of fresh){ if(q.length>=5) break; q.push(i); }
+  for(const i of reviews.slice(3)){ if(q.length>=5) break; q.push(i); }
+  return q;
+}
+function stockCount(){ return Object.values(state.cards).filter(c=>c.learned).length; }
+function markPassed(i){
+  const c=state.cards[i];
+  c.seen=true; c.learned=true;
+  c.box=Math.min(c.box+1,5);
+  c.due=Date.now()+INTERVALS[c.box-1];
+  save();
+}
+function markSkipped(i){
+  const c=state.cards[i];
+  c.seen=true;
+  c.due=Date.now()+DAY;   // 在庫は減らさない。明日また出るだけ。
+  save();
+}
+
+/* ---------- DOM ---------- */
+const $=id=>document.getElementById(id);
+const scHome=$('scHome'),scCard=$('scCard'),scDone=$('scDone');
+function show(which){
+  scHome.hidden=which!=='home';
+  scCard.hidden=which!=='card';
+  scDone.hidden=which!=='done';
+}
+function abortAttempt(){
+  attemptToken++;
+  if(rec){ try{ rec.abort(); }catch(e){} rec=null; }
+  stopAudio();
+}
+
+function render(){
+  const n=stockCount();
+  $('stockN').textContent=n;
+  $('meterFill').style.width=(n/PHRASES.length*100)+'%';
+
+  const visa=$('visa');
+  visa.textContent='';
+  for(let i=0;i<PHRASES.length;i++){
+    const d=document.createElement('div');
+    const done=state.cards[i].learned;
+    d.className='slot '+(done?'done':'empty');
+    d.textContent=i+1;
+    if(done) d.style.transform='rotate('+(((i*37)%11)-5)+'deg)';
+    d.title=done?PHRASES[i].e:'まだ';
+    visa.appendChild(d);
+  }
+  $('visaHint').textContent = n===0 ? 'まだ空です' : n+'つ 押した';
+
+  const q=todayQueue();
+  $('startBtn').disabled=q.length===0;
+  $('startBtn').textContent = q.length===0 ? '今日の分は終わりました'
+    : (n===0 ? 'はじめる（5枚・3分）' : '今日の'+q.length+'枚をはじめる');
+  $('homeNote').textContent = q.length===0
+    ? '明日また、覚えた文が混ざって出てきます。'
+    : (n===0 ? '1枚目は3語です。声に出すだけ。' : '覚えた文も混ぜて出します。');
+
+  $('foot').textContent = micState==='blocked'
+    ? 'この画面ではマイクが使えないため、判定ができません。'
+    : '判子の条件は2つ。通じたこと。そして、声が出るまで2.5秒以内だったこと。';
+}
+
+/* ---------- マイクが使えないとき ---------- */
+function blockMic(msg){
+  micState='blocked';
+  $('sayBtn').hidden=true;
+  $('verdict').textContent='';
+  $('blocker').innerHTML='<b>マイクが使えません。</b><br>'+esc(msg)+'<br>iPhone は Safari、Android は Chrome で、このページを直接開いてください。';
+  $('blocker').hidden=false;
+  render();
+}
+
+/* ---------- カード ---------- */
+function curId(){ return session.queue[session.idx]; }
+
+function paintTries(marks){
+  const d=$('tries'); d.textContent='';
+  for(let k=0;k<MAX_TRIES;k++){
+    const i=document.createElement('i');
+    if(marks[k]) i.className=marks[k];
+    d.appendChild(i);
+  }
+}
+let tryMarks=[];
+
+function openCard(){
+  abortAttempt();
+  tries=0; tryMarks=[];
+  const p=PHRASES[curId()];
+
+  $('dots').textContent='';
+  for(let k=0;k<session.queue.length;k++){
+    const s=document.createElement('span');
+    if(k<=session.idx) s.className='on';
+    $('dots').appendChild(s);
+  }
+
+  $('scene').textContent=p.s;
+  $('situation').textContent=p.j;
+  $('stageNote').textContent='まず耳で覚えます。英文はまだ出しません。';
+  $('stageListen').hidden=false;
+  $('answer').hidden=true;
+  $('slowBtn').disabled=true;
+  $('sayBtn').disabled=true;
+  $('sayBtn').hidden=(micState==='blocked');
+  $('sayBtn').textContent='言ってみる';
+  $('verdict').textContent='';
+  $('peek').hidden=true; $('peek').textContent='';
+  $('revealBtn').hidden=false;
+  $('blocker').hidden=(micState!=='blocked');
+  paintTries(tryMarks);
+  if(!SR && micState!=='blocked') blockMic('このブラウザは音声認識に対応していません。');
+  show('card');
+}
+
+function sealEl(i){
+  const d=document.createElement('div');
+  d.className='seal-mark land';
+  d.innerHTML='通じた<br>'+(i+1);
+  return d;
+}
+function revealText(){
+  $('peek').textContent=PHRASES[curId()].e;
+  $('peek').hidden=false;
+  $('revealBtn').hidden=true;
+}
+
+function listen(){
+  const p=PHRASES[curId()];
+  const my=++attemptToken;
+  stopAudio();
+
+  let r;
+  try{ r=new SR(); }
+  catch(e){ blockMic('音声認識を起動できませんでした。'); return; }
+  rec=r;
+  r.lang='en-US';
+  r.continuous=false;
+  r.interimResults=true;     // 最初の中間結果で「声が出た時刻」を取るため
+  r.maxAlternatives=5;
+
+  const v=$('verdict');
+  v.innerHTML='<span class="listening"></span><p>聞いています。声に出してどうぞ。</p>';
+  $('sayBtn').disabled=true;
+
+  let t0=performance.now(), tSpeech=null, best=0, bestText='', settled=false;
+
+  r.onaudiostart=()=>{ if(my===attemptToken) t0=performance.now(); };
+  r.onspeechstart=()=>{ if(my===attemptToken && tSpeech===null) tSpeech=performance.now(); };
+  r.onresult=ev=>{
+    if(my!==attemptToken) return;
+    if(tSpeech===null) tSpeech=performance.now();
+    for(let i=ev.resultIndex;i<ev.results.length;i++){
+      const res=ev.results[i];
+      if(!res.isFinal) continue;
+      for(let k=0;k<res.length;k++){
+        const alt=res[k].transcript||'';
+        const sc=matchScore(alt,p.e);
+        if(!bestText || sc>best){ best=sc; bestText=alt; }
+      }
+    }
+  };
+  r.onerror=ev=>{
+    if(my!==attemptToken) return;
+    settled=true; clearTimeout(watchdog);
+    const code=ev.error;
+    if(code==='not-allowed'||code==='service-not-allowed'){ blockMic('マイクの使用が許可されていません。ブラウザの設定でこのページのマイクを「許可」にしてください。'); return; }
+    if(code==='audio-capture'){ blockMic('マイクが見つかりませんでした。'); return; }
+    if(code==='no-speech'){ v.innerHTML='<p>声が聞こえませんでした。もう一度どうぞ。</p>'; $('sayBtn').disabled=false; return; }
+    if(code==='network'){ v.innerHTML='<p>認識サービスに届きませんでした。電波を確認して、もう一度。</p>'; $('sayBtn').disabled=false; return; }
+    if(code==='aborted'){ return; }
+    v.innerHTML='<p>うまく聞き取れませんでした。もう一度どうぞ。</p>'; $('sayBtn').disabled=false;
+  };
+  r.onend=()=>{
+    if(my!==attemptToken || settled) return;
+    settled=true; clearTimeout(watchdog);
+    judge();
+  };
+  const watchdog=setTimeout(()=>{ if(my===attemptToken && !settled){ try{ r.stop(); }catch(e){} } },9000);
+
+  function judge(){
+    if(!bestText){ v.innerHTML='<p>声が聞こえませんでした。もう一度どうぞ。</p>'; $('sayBtn').disabled=false; return; }
+    tries++;
+    const lat = tSpeech!==null ? (tSpeech-t0) : null;
+    const latS = lat!==null ? (lat/1000).toFixed(1) : null;
+
+    if(best>=MATCH_MIN && (lat===null || lat<=HESITATE_MS)){
+      tryMarks.push('hit'); paintTries(tryMarks);
+      v.textContent='';
+      v.appendChild(sealEl(curId()));
+      const t=document.createElement('p');
+      t.innerHTML='<b>通じました。</b>'+(latS!==null?' 反応 '+latS+' 秒。':'');
+      v.appendChild(t);
+      setTimeout(()=>pass(lat),700);
+      return;
+    }
+    tryMarks.push('miss'); paintTries(tryMarks);
+    if(best>=MATCH_MIN){
+      v.innerHTML='<p><b>通じました。</b>ただ、声が出るまで '+latS+' 秒。<br>もう一度、今度は考えずにすぐ。</p>';
+    }else{
+      v.innerHTML='<p>いまのは <span class="heard">「'+esc(bestText)+'」</span> に聞こえました。<br>もう一度、聞いてから言ってみましょう。</p>';
+    }
+    afterMiss();
+  }
+  function afterMiss(){
+    if(tries>=MAX_TRIES){ giveUp(); return; }
+    if(tries>=2) revealText();   // 2回外したら文字を見せる。見て言えれば、それでいい。
+    $('sayBtn').disabled=false;
+    $('sayBtn').textContent='もう一度 言ってみる';
+  }
+
+  try{ r.start(); }
+  catch(e){ v.innerHTML='<p>もう一度どうぞ。</p>'; $('sayBtn').disabled=false; }
+}
+
+function pass(lat){
+  const i=curId();
+  const wasNew=!state.cards[i].learned;
+  markPassed(i);
+  if(wasNew) session.gained++;
+  if(lat!==null) session.lats.push(lat);
+  render();
+  revealAnswer(i,true,lat);
+}
+function giveUp(){
+  const i=curId();
+  markSkipped(i);
+  render();
+  revealAnswer(i,false,null);
+}
+
+function revealAnswer(i,passed,lat){
+  const p=PHRASES[i];
+  $('stageListen').hidden=true;
+  $('enText').textContent=p.e;
+  $('meanText').textContent=p.m;
+  $('tipText').innerHTML=p.t;
+  const v=$('answerVerdict');
+  v.textContent='';
+  if(passed){
+    v.appendChild(sealEl(i));
+    const t=document.createElement('p');
+    t.innerHTML='<b>在庫に入りました。</b>';
+    v.appendChild(t);
+    $('stat').textContent = (lat!==null ? '反応 '+(lat/1000).toFixed(1)+' 秒 · ' : '') + tries+' 回目で通じた';
+  }else{
+    const t=document.createElement('p');
+    t.textContent='今日はここまで。この文は明日また出します。';
+    v.appendChild(t);
+    $('stat').textContent = tries+' 回 試した';
+  }
+  $('answer').hidden=false;
+  $('nextBtn').textContent = session.idx>=session.queue.length-1 ? '終わる' : '次へ';
+}
+
+/* ---------- イベント ---------- */
+$('startBtn').addEventListener('click',()=>{
+  const q=todayQueue();
+  if(!q.length) return;
+  session={queue:q,idx:0,gained:0,lats:[]};
+  openCard();
+});
+$('playBtn').addEventListener('click',()=>{
+  const p=PHRASES[curId()];
+  const ok=speak(p.e,0.85);
+  $('slowBtn').disabled=false;
+  if(micState!=='blocked') $('sayBtn').disabled=false;
+  if(!ok){
+    $('stageNote').textContent='このブラウザでは音が出せません。英文を見ながら声に出してください。';
+    revealText();
+  }else{
+    $('stageNote').textContent='聞こえたとおりに、まねして声に出します。';
+  }
+});
+$('slowBtn').addEventListener('click',()=>speak(PHRASES[curId()].e,0.6));
+$('replayBtn').addEventListener('click',()=>speak(PHRASES[curId()].e,0.85));
+$('sayBtn').addEventListener('click',listen);
+$('revealBtn').addEventListener('click',revealText);
+$('nextBtn').addEventListener('click',()=>{
+  abortAttempt();
+  session.idx++;
+  if(session.idx>=session.queue.length){
+    $('gained').textContent=session.gained;
+    const n=stockCount();
+    const avg = session.lats.length ? (session.lats.reduce((a,b)=>a+b,0)/session.lats.length/1000).toFixed(1) : null;
+    $('doneStat').textContent = avg!==null ? '今日の平均反応 '+avg+' 秒' : '';
+    $('doneMsg').textContent = n>=PHRASES.length
+      ? '50文すべてが在庫に入りました。次の旅で使ってください。'
+      : 'いま言えるのは '+n+' 文。明日もまた5枚。';
+    show('done');
+  }else{
+    openCard();
+  }
+});
+$('quitBtn').addEventListener('click',()=>{
+  abortAttempt();
+  render(); show('home');
+});
+$('backBtn').addEventListener('click',()=>{ render(); show('home'); });
+
+/* ---------- 起動 ---------- */
+state=loadLocal();
+render();
+show('home');
+</script>
