@@ -110,6 +110,9 @@
 
   .big{font-family:var(--en);font-size:52px;font-weight:600;color:var(--seal);line-height:1;margin:0;font-variant-numeric:tabular-nums}
   .done-body{display:flex;flex-direction:column;gap:6px;align-items:center;text-align:center;padding:8px 0}
+  .xfer{display:flex;flex-direction:column;gap:10px}
+  .xfer textarea{width:100%;font-family:var(--en);font-size:12px;line-height:1.4;padding:10px;border:1px solid var(--line);border-radius:9px;background:var(--paper);color:var(--ink);resize:none;height:84px}
+  .xfer p{margin:0;font-size:13px;color:var(--ink-soft)}
   footer{font-size:11.5px;color:var(--ink-soft);text-align:center;line-height:1.8}
 </style>
 
@@ -133,6 +136,17 @@
     </div>
     <button class="btn-seal" id="startBtn">今日の5枚をはじめる</button>
     <p class="tagline" id="homeNote" style="text-align:center"></p>
+    <div style="display:flex;justify-content:center"><button class="btn-text" id="xferBtn">別の端末・別の開き方に引き継ぐ</button></div>
+    <div class="panel xfer" id="xfer" hidden>
+      <p class="label">引き継ぎコード</p>
+      <p>進み具合は「開き方」ごとに別々に保存されます（ブラウザで開いた分と、ホーム画面のアイコンから開いた分は別）。このコードを貼れば移せます。</p>
+      <textarea id="xferOut" readonly></textarea>
+      <button class="btn-quiet" id="xferCopy">コードをコピー</button>
+      <p class="label" style="margin-top:6px">コードを貼って復元</p>
+      <textarea id="xferIn" placeholder="ここに貼る"></textarea>
+      <button class="btn-main" id="xferIn_btn">この端末に復元する</button>
+      <p id="xferMsg"></p>
+    </div>
   </section>
 
   <section class="screen" id="scCard" hidden>
@@ -291,6 +305,31 @@ function loadLocal(){
 function save(){
   state.updatedAt=Date.now();
   try{ localStorage.setItem(KEY,JSON.stringify(state)); }catch(e){}
+}
+
+/* ---------- 引き継ぎ（保管庫は開き方ごとに別なので、コードで移す） ---------- */
+function exportCode(){
+  const now=Date.now();
+  const rows=[];
+  for(let i=0;i<PHRASES.length;i++){
+    const c=state.cards[i];
+    rows.push([c.learned?1:0, c.seen?1:0, c.box, Math.max(0,Math.round((c.due-now)/DAY))]);
+  }
+  const json=JSON.stringify({v:1,rows});
+  return 'T50-'+btoa(unescape(encodeURIComponent(json))).replace(/=+$/,'');
+}
+function importCode(code){
+  const m=String(code).trim().match(/^T50-([A-Za-z0-9+/]+)$/);
+  if(!m) throw new Error('コードの形が違います。「T50-」から始まる文字列を貼ってください。');
+  const json=decodeURIComponent(escape(atob(m[1])));
+  const obj=JSON.parse(json);
+  if(!obj||obj.v!==1||!Array.isArray(obj.rows)||obj.rows.length!==PHRASES.length) throw new Error('このコードは読めませんでした。');
+  const now=Date.now();
+  const fresh=blankState();
+  obj.rows.forEach((r,i)=>{
+    fresh.cards[i]={learned:!!r[0], seen:!!r[1], box:Math.max(0,Math.min(5,Number(r[2])||0)), due:now+(Number(r[3])||0)*DAY};
+  });
+  state=fresh; save();
 }
 
 /* ---------- 音声出力 ---------- */
@@ -536,6 +575,7 @@ function listen(){
   r.onerror=ev=>{
     if(my!==attemptToken) return;
     settled=true; clearTimeout(watchdog);
+    try{ r.abort(); }catch(e){}   // マイクを手放す
     const code=ev.error;
     if(code==='not-allowed'||code==='service-not-allowed'){ blockMic('マイクの使用が許可されていません。ブラウザの設定でこのページのマイクを「許可」にしてください。'); return; }
     if(code==='audio-capture'){ blockMic('マイクが見つかりませんでした。'); return; }
@@ -547,6 +587,8 @@ function listen(){
   r.onend=()=>{
     if(my!==attemptToken || settled) return;
     settled=true; clearTimeout(watchdog);
+    try{ r.abort(); }catch(e){}   // 判定が済んだらマイクを手放す
+    rec=null;
     judge();
   };
   const watchdog=setTimeout(()=>{ if(my===attemptToken && !settled){ try{ r.stop(); }catch(e){} } },9000);
@@ -670,6 +712,30 @@ $('quitBtn').addEventListener('click',()=>{
   render(); show('home');
 });
 $('backBtn').addEventListener('click',()=>{ render(); show('home'); });
+
+$('xferBtn').addEventListener('click',()=>{
+  const box=$('xfer');
+  box.hidden=!box.hidden;
+  if(!box.hidden){ $('xferOut').value=exportCode(); $('xferMsg').textContent=''; }
+});
+$('xferOut').addEventListener('focus',e=>e.target.select());
+$('xferCopy').addEventListener('click',async()=>{
+  const t=$('xferOut').value;
+  try{ await navigator.clipboard.writeText(t); $('xferMsg').textContent='コピーしました。もう一方の端末（開き方）で貼ってください。'; }
+  catch(e){ $('xferOut').focus(); $('xferOut').select(); $('xferMsg').textContent='長押しでコピーしてください。'; }
+});
+$('xferIn_btn').addEventListener('click',()=>{
+  try{
+    importCode($('xferIn').value);
+    render();
+    $('xferMsg').textContent='復元しました。いま言える文: '+stockCount()+'。';
+    $('xferIn').value='';
+  }catch(e){ $('xferMsg').textContent=e.message; }
+});
+
+// アプリを閉じた・裏に回した時点でマイクを手放す
+document.addEventListener('visibilitychange',()=>{ if(document.hidden) abortAttempt(); });
+window.addEventListener('pagehide',()=>abortAttempt());
 
 /* ---------- 起動 ---------- */
 state=loadLocal();
