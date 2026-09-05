@@ -117,28 +117,56 @@
   .xfer textarea{width:100%;font-family:var(--en);font-size:12px;line-height:1.4;padding:10px;border:1px solid var(--line);border-radius:9px;background:var(--paper);color:var(--ink);resize:none;height:84px}
   .xfer p{margin:0;font-size:13px;color:var(--ink-soft)}
   footer{font-size:11.5px;color:var(--ink-soft);text-align:center;line-height:1.8}
+
+  /* ---- 学びの地図（ホーム） ---- */
+  .map{display:flex;flex-direction:column;gap:0}
+  .stage{display:flex;align-items:center;gap:13px;padding:13px 4px;border-top:1px solid var(--line);background:none;border-left:none;border-right:none;border-bottom:none;border-radius:0;width:100%;text-align:left;color:var(--ink);font-family:var(--jp)}
+  .stage:first-child{border-top:none}
+  .stage:active{transform:none;background:var(--paper)}
+  .stage .num{font-family:var(--en);font-size:15px;font-weight:600;color:var(--seal);width:20px;text-align:center;flex:0 0 20px}
+  .stage .body{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px}
+  .stage .ttl{font-size:15px;font-weight:700;line-height:1.3;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .stage .sub{font-size:12px;color:var(--ink-soft);line-height:1.5}
+  .stage .bar{height:3px;background:var(--line);border-radius:2px;overflow:hidden}
+  .stage .bar i{display:block;height:100%;background:var(--seal)}
+  .stage .cnt{font-family:var(--en);font-variant-numeric:tabular-nums;font-size:12px;color:var(--ink-soft);flex:0 0 auto}
+  .stage[disabled]{opacity:.5}
+  .badge{font-size:10px;letter-spacing:.08em;font-weight:700;color:var(--seal-ink);background:var(--seal);padding:2px 7px;border-radius:999px}
+  .badge.soft{background:transparent;color:var(--seal);border:1px solid var(--seal)}
+  .hear{font-family:var(--en);font-size:19px;line-height:1.4;margin:0}
+  .hear-ja{font-size:13px;color:var(--ink-soft);margin:0}
+  .picker{display:flex;flex-direction:column;gap:10px}
+  .picker label{display:flex;align-items:center;gap:11px;padding:11px 13px;border:1px solid var(--line);border-radius:10px;font-size:15px;cursor:pointer}
+  .picker input{width:18px;height:18px;accent-color:var(--seal)}
+  .picker small{margin-left:auto;font-family:var(--en);color:var(--ink-soft);font-variant-numeric:tabular-nums}
 </style>
 
 <div class="wrap">
   <header>
     <div class="brandrow">
       <h1 class="brand">旅の50文</h1>
-      <span class="stock"><b id="stockN">0</b> / 50 言える</span>
+      <span class="stock"><b id="stockN">0</b> / <span id="stockT">50</span> 判子</span>
     </div>
     <div class="meter"><i id="meterFill"></i></div>
     <p class="tagline">聞く → 言う → 通じて、迷わなければ判子。</p>
   </header>
 
+  <!-- ホーム：学びの地図 -->
   <section class="screen" id="scHome">
     <div class="panel">
       <div class="visa-cap">
-        <p class="label">査証欄</p>
+        <p class="label">学びの地図</p>
+        <p class="label">番号はおすすめの順</p>
+      </div>
+      <div class="map" id="map"></div>
+    </div>
+    <div class="panel">
+      <div class="visa-cap">
+        <p class="label">査証欄 · 1. 言える</p>
         <p class="label" id="visaHint">まだ空です</p>
       </div>
       <div class="visa" id="visa"></div>
     </div>
-    <button class="btn-seal" id="startBtn">今日の5枚をはじめる</button>
-    <p class="tagline" id="homeNote" style="text-align:center"></p>
     <div style="display:flex;justify-content:center"><button class="btn-text" id="xferBtn">別の端末・別の開き方に引き継ぐ</button></div>
     <div class="panel xfer" id="xfer" hidden>
       <p class="label">引き継ぎコード</p>
@@ -152,6 +180,19 @@
     </div>
   </section>
 
+  <!-- 前日リハーサル：場面を選ぶ -->
+  <section class="screen" id="scPick" hidden>
+    <div class="panel">
+      <p class="scene">5. 前日リハーサル</p>
+      <p class="situation">明日、行く場面を選ぶ</p>
+      <p class="hidden-note" style="margin-bottom:14px">選んだ場面の文を全部、通しで言います。判子の条件はいつもと同じ。</p>
+      <div class="picker" id="picker"></div>
+    </div>
+    <button class="btn-seal" id="pickStart" disabled>この場面で通す</button>
+    <button class="btn-text" id="pickBack">地図に戻る</button>
+  </section>
+
+  <!-- カード -->
   <section class="screen" id="scCard" hidden>
     <div class="progress-dots" id="dots"></div>
 
@@ -160,7 +201,7 @@
       <p class="situation" id="situation"></p>
 
       <div id="stageListen">
-        <p class="hidden-note" id="stageNote">まず耳で覚えます。英文はまだ出しません。</p>
+        <p class="hidden-note" id="stageNote"></p>
         <div class="row" style="margin-top:16px">
           <button class="btn-main" id="playBtn">聞く</button>
           <button class="btn-quiet" id="slowBtn" disabled>ゆっくり</button>
@@ -179,6 +220,12 @@
 
       <div class="answer" id="answer" hidden>
         <div class="verdict" id="answerVerdict" style="margin-top:0"></div>
+        <div id="hearBox" hidden>
+          <p class="label">相手</p>
+          <p class="hear" id="hearText"></p>
+          <p class="hear-ja" id="hearJa"></p>
+          <p class="label" style="margin-top:10px">自分</p>
+        </div>
         <p class="en" id="enText"></p>
         <p class="mean" id="meanText"></p>
         <p class="stat" id="stat"></p>
@@ -192,14 +239,15 @@
     <button class="btn-text" id="quitBtn">今日はここまでにする</button>
   </section>
 
+  <!-- 終了 -->
   <section class="screen" id="scDone" hidden>
     <div class="panel done-body">
-      <p class="label">今日ふえた判子</p>
+      <p class="label" id="doneLabel">今日ふえた判子</p>
       <p class="big" id="gained">0</p>
       <p class="stat" id="doneStat"></p>
       <p class="mean" id="doneMsg" style="margin-top:6px"></p>
     </div>
-    <button class="btn-main" id="backBtn">査証欄を見る</button>
+    <button class="btn-main" id="backBtn">地図に戻る</button>
   </section>
 
   <footer id="foot"></footer>
@@ -207,7 +255,8 @@
 
 <script>
 /* ============================================================
-   旅の50文 — 海外旅行で使う50文を、口の在庫にする
+   旅の50文 — 海外旅行で使う英語を、口の在庫にする
+   段階: 1 言える / 2 聞いて返せる / 3 型で増やせる / 4 場面を通せる(準備中) / 5 前日リハーサル
    判子の条件: 音声認識で「通じた」 かつ 声が出るまで2.5秒以内（迷っていない）
    ============================================================ */
 
@@ -264,6 +313,79 @@ const PHRASES = [
  {s:"旅先で",j:"別れぎわに、ひとこと。",e:"Have a nice day.",m:"よい一日を。",t:"Have a を<b>ハヴァ</b>と1語に。これが自然に出れば旅の空気が良くなる。"}
 ];
 
+/* ---------- 2. 聞いて返せる：相手の一言 → 自分の返し ---------- */
+const EXCHANGES = [
+ {s:"機内",j:"食事を配りに来た。",h:"Chicken or beef?",hj:"チキンとビーフ、どちらにしますか。",e:"Chicken, please.",a:["Beef, please."],m:"チキンでお願いします。",t:"聞かれたら<b>単語＋please</b>で足りる。文にしなくてよい。"},
+ {s:"機内",j:"飲み物のカートが来た。",h:"Anything to drink?",hj:"お飲み物はいかがですか。",e:"Water, please.",a:["Coffee, please.","Orange juice, please.","No, thank you."],m:"水をください。",t:"いらないときは <b>No, thank you.</b>"},
+ {s:"機内",j:"座席を選ぶよう言われた。",h:"Window or aisle?",hj:"窓側と通路側、どちらにしますか。",e:"Window, please.",a:["Aisle, please."],m:"窓側でお願いします。",t:"aisle は<b>アイル</b>。sは読まない。"},
+ {s:"機内",j:"隣の人が通路に出たい。",h:"Excuse me, can I get by?",hj:"すみません、通してもらえますか。",e:"Sure.",a:["Of course.","Yes, of course."],m:"どうぞ。",t:"<b>Sure.</b> の一言で通じる。立ちながら言う。"},
+ {s:"入国審査",j:"係官に目的を聞かれた。",h:"What's the purpose of your visit?",hj:"訪問の目的は何ですか。",e:"Sightseeing.",a:["Business."],m:"観光です。",t:"文にしなくていい。<b>サイ</b>トシーイングと最初を強く。"},
+ {s:"入国審査",j:"滞在日数を聞かれた。",h:"How long are you staying?",hj:"どのくらい滞在しますか。",e:"Five days.",a:["Three days.","Four days.","A week.","One week.","Ten days.","Two weeks."],m:"5日間です。",t:"自分の日数で。<b>days</b> は「デイズ」と濁る。"},
+ {s:"入国審査",j:"宿泊先を聞かれた。予約票を見せながら。",h:"Where are you staying?",hj:"どこに泊まりますか。",e:"This hotel.",a:["At this hotel."],m:"このホテルです。",t:"紙を見せながら <b>This hotel.</b> で十分。"},
+ {s:"税関",j:"申告があるか聞かれた。",h:"Anything to declare?",hj:"申告するものはありますか。",e:"No, nothing.",a:["No.","Nothing."],m:"いいえ、何もありません。",t:"nothing の o は<b>ア</b>。「ナッシン」。"},
+ {s:"空港",j:"パスポートの提示を求められた。",h:"Can I see your passport?",hj:"パスポートを見せてもらえますか。",e:"Here you are.",a:["Here it is.","Sure."],m:"どうぞ。",t:"渡すときの決まり文句。<b>ヒアユア</b>とつなげる。"},
+ {s:"カフェ",j:"レジで注文を聞かれた。",h:"What can I get you?",hj:"ご注文は？",e:"Two coffees, please.",a:["Coffee, please.","This one, please.","One coffee, please."],m:"コーヒーを2つください。",t:"聞き取れなくても、注文を聞かれているのは分かる。<b>数＋品名＋please</b>。"},
+ {s:"カフェ",j:"店内か持ち帰りか聞かれた。",h:"For here or to go?",hj:"店内ですか、お持ち帰りですか。",e:"To go, please.",a:["For here, please.","To go.","For here."],m:"持ち帰りで。",t:"聞かれた言葉を<b>そのまま返す</b>のがコツ。"},
+ {s:"カフェ",j:"他に注文はないか聞かれた。",h:"Anything else?",hj:"他にご注文は？",e:"That's all.",a:["No, that's all.","That's it.","No, thank you."],m:"以上です。",t:"これを言うと会計に進んでくれる。"},
+ {s:"カフェ",j:"支払い方法を聞かれた。",h:"Cash or card?",hj:"現金ですか、カードですか。",e:"Card, please.",a:["Cash, please.","By card.","Card."],m:"カードで。",t:"card の最後の d は軽く置くだけ。"},
+ {s:"食事",j:"入口で人数を聞かれた。",h:"How many?",hj:"何名様ですか。",e:"Two, please.",a:["Two.","Just one.","One, please.","Three, please.","Four, please."],m:"2人です。",t:"指で数を見せながら言えば確実。"},
+ {s:"食事",j:"注文を取りに来た。まだ決まっていない。",h:"Are you ready to order?",hj:"ご注文はお決まりですか。",e:"Not yet.",a:["Not yet, sorry.","Yes. This one, please.","Yes, please."],m:"まだです。",t:"<b>Not yet.</b> で待ってくれる。急いで決めなくていい。"},
+ {s:"食事",j:"飲み物を聞かれた。",h:"Would you like something to drink?",hj:"お飲み物はいかがですか。",e:"Can I have some water?",a:["Water, please.","Just water, please.","Just water."],m:"お水をいただけますか。",t:"Would you like 〜? は「〜はいかが？」。答えは<b>品名＋please</b>でよい。"},
+ {s:"食事",j:"食事の途中に店員が様子を聞きに来た。",h:"How is everything?",hj:"お食事はいかがですか。",e:"It's great, thank you.",a:["Great, thank you.","Very good, thank you.","It was delicious.","Good, thank you."],m:"おいしいです、ありがとう。",t:"文句がなければ <b>Great, thank you.</b> で会話は終わる。"},
+ {s:"食事",j:"デザートを勧められた。もう十分。",h:"Would you like some dessert?",hj:"デザートはいかがですか。",e:"No, thank you. Check, please.",a:["No, thank you.","Check, please.","No, thanks. Check, please."],m:"結構です。お会計をお願いします。",t:"断る＋次の要求をひと息で。"},
+ {s:"食事",j:"料理が運ばれてきた。",h:"Enjoy your meal.",hj:"ごゆっくりどうぞ。",e:"Thank you.",a:["Thanks."],m:"ありがとう。",t:"返事はこれだけ。<b>Thank you.</b> が反射で出れば十分。"},
+ {s:"買い物",j:"店員が声をかけてきた。見ているだけ。",h:"Can I help you?",hj:"何かお探しですか。",e:"I'm just looking.",a:["Just looking, thanks.","I'm just looking, thank you.","Just looking."],m:"見ているだけです。",t:"これで店員は離れてくれる。<b>ジャス ルッキン</b>。"},
+ {s:"買い物",j:"サイズを聞かれた。",h:"What size?",hj:"サイズは？",e:"Medium, please.",a:["Small, please.","Large, please.","Medium.","Small.","Large."],m:"Mでお願いします。",t:"S/M/L は <b>small / medium / large</b>。"},
+ {s:"買い物",j:"黒はないと言われた。",h:"Sorry, we don't have that in black.",hj:"すみません、黒はありません。",e:"That's okay. Thank you.",a:["Okay, thank you.","Do you have it in blue?","That's okay.","Okay."],m:"大丈夫です。ありがとう。",t:"<b>That's okay.</b> で引き下がれる。無理に続けなくていい。"},
+ {s:"買い物",j:"袋が要るか聞かれた。",h:"Would you like a bag?",hj:"袋は要りますか。",e:"Yes, please.",a:["No, thank you.","No, thanks.","Yes."],m:"はい、お願いします。",t:"Would you like 〜? には <b>Yes, please. / No, thank you.</b> の2択。"},
+ {s:"買い物",j:"金額を言われた。",h:"That's twenty dollars.",hj:"20ドルです。",e:"Can I pay by card?",a:["Card, please.","By card, please.","Okay. Card, please."],m:"カードで払えますか。",t:"数字が聞き取れなくても、レジの画面を見れば分かる。"},
+ {s:"買い物",j:"レシートが要るか聞かれた。",h:"Do you need a receipt?",hj:"レシートは要りますか。",e:"Yes, please.",a:["No, thank you.","No, thanks."],m:"はい、お願いします。",t:"receipt は<b>リシート</b>。p は読まない。"},
+ {s:"ホテル",j:"フロントで予約の有無を聞かれた。",h:"Do you have a reservation?",hj:"ご予約はありますか。",e:"Yes, I have a reservation.",a:["Yes.","I have a reservation.","Yes, I do."],m:"はい、予約しています。",t:"<b>Yes.</b> だけでも通じる。名前を続けて言えると速い。"},
+ {s:"ホテル",j:"名前を聞かれた。",h:"May I have your name?",hj:"お名前をいただけますか。",e:"My name is Sato.",a:["Sato.","It's Sato."],m:"佐藤です。",t:"自分の名前で言ってよい。<b>My name is</b> が出れば通る。"},
+ {s:"ホテル",j:"鍵を渡された。",h:"Here's your key. Room 512.",hj:"こちらが鍵です。512号室です。",e:"Thank you. What time is breakfast?",a:["What time is breakfast?","Thank you."],m:"ありがとう。朝食は何時ですか。",t:"受け取って、聞きたいことを続ける。"},
+ {s:"ホテル",j:"チェックアウトの朝、フロントで。",h:"Checking out?",hj:"チェックアウトですか。",e:"Yes. Can I leave my bag here?",a:["Can I leave my bag here?","Yes, please."],m:"はい。荷物を預けられますか。",t:"leave my を<b>リーヴマイ</b>。"},
+ {s:"移動",j:"タクシーに乗った。行き先を聞かれた。地図を見せながら。",h:"Where to?",hj:"どちらまで？",e:"Can you take me here?",a:["This hotel, please.","To the airport, please.","Here, please.","The airport, please."],m:"ここまでお願いします。",t:"画面を見せて <b>here</b> と言えば伝わる。"},
+ {s:"移動",j:"駅員にバスか電車か聞かれた。",h:"Do you want the bus or the train?",hj:"バスと電車、どちらにしますか。",e:"The train, please.",a:["The bus, please.","Train, please.","Bus, please."],m:"電車でお願いします。",t:"or で聞かれたら、<b>片方をそのまま返す</b>。"},
+ {s:"移動",j:"バスの運転手に行き先を聞かれた。",h:"Where are you going?",hj:"どこまで行きますか。",e:"The airport, please.",a:["To the airport.","The station, please.","Downtown, please."],m:"空港まで。",t:"場所の名前＋please。"},
+ {s:"移動",j:"電車で隣の席について聞かれた。",h:"Is this seat taken?",hj:"この席、空いていますか。",e:"No, go ahead.",a:["No, please.","Go ahead.","No."],m:"どうぞ。",t:"<b>Go ahead.</b>＝どうぞ。手で席を示しながら。"},
+ {s:"困ったとき",j:"困った顔をしていたら声をかけられた。",h:"Are you okay?",hj:"大丈夫ですか。",e:"I'm lost. Can you help me?",a:["Can you help me?","I'm lost.","I'm lost. Can you help?"],m:"道に迷いました。助けてもらえますか。",t:"状況＋頼み事。<b>I'm lost.</b> だけでも助けが来る。"},
+ {s:"困ったとき",j:"警察やホテルで、何があったか聞かれた。",h:"What happened?",hj:"何があったのですか。",e:"I lost my passport.",a:["I lost my bag.","I lost my phone.","I lost my wallet."],m:"パスポートをなくしました。",t:"なくした物を入れ替えて言える。落ち着いてゆっくりでよい。"},
+ {s:"困ったとき",j:"店に入ろうとしたら、閉店だと言われた。",h:"Sorry, we're closed.",hj:"すみません、閉店です。",e:"Oh, okay. Thank you.",a:["Okay, thank you.","All right, thanks.","Okay."],m:"あ、そうですか。ありがとう。",t:"<b>Oh, okay.</b> で受け止める。断られたときの決まり文句。"},
+ {s:"旅先で",j:"どこから来たか聞かれた。",h:"Where are you from?",hj:"どちらから来ましたか。",e:"I'm from Japan.",a:["Japan.","From Japan."],m:"日本から来ました。",t:"旅先で一番聞かれる質問。<b>アイム フロム ジャパン</b>。"},
+ {s:"旅先で",j:"すれ違いざまに挨拶された。",h:"How are you?",hj:"元気ですか。",e:"Good, thank you. And you?",a:["Fine, thank you.","Good, and you?","I'm good, thanks.","Good."],m:"元気です。あなたは？",t:"<b>Good. And you?</b> で返せば会話が成立する。"},
+ {s:"旅先で",j:"写真を撮ってほしいと頼まれた。",h:"Could you take a picture of us?",hj:"私たちの写真を撮ってもらえますか。",e:"Sure.",a:["Of course.","Okay.","Sure, no problem."],m:"いいですよ。",t:"頼まれごとは <b>Sure.</b>。断るなら Sorry, I'm in a hurry."},
+ {s:"旅先で",j:"別れぎわに声をかけられた。",h:"Have a nice day!",hj:"よい一日を。",e:"You too.",a:["Thank you, you too.","Thanks, you too.","You too, thanks."],m:"あなたも。",t:"<b>You too.</b> が反射で出るようになれば、旅の空気が変わる。"}
+];
+
+/* ---------- 3. 型で増やせる：12の型 × 5つの言い換え ---------- */
+const PATTERNS = [
+ {n:"＿, please.",ja:"〜をお願いします",t:"単語ひとつに please を足すだけで頼み事になる。旅で一番使う型。",
+  x:[["Water, please.","水",null],["Check, please.","お会計",null],["Two, please.","2つ",null],["This one, please.","これ",null],["Slowly, please.","ゆっくり",null]]},
+ {n:"Can I have ＿?",ja:"〜をもらえますか",t:"Can I は<b>キャナイ</b>と1語に。物を頼むときの万能の型。",
+  x:[["Can I have a towel?","タオル","towel"],["Can I have the menu?","メニュー","menu"],["Can I have the check?","お会計","check"],["Can I have some water?","お水","water"],["Can I have a bag?","袋","bag"]]},
+ {n:"Do you have ＿?",ja:"〜はありますか",t:"Do you have は<b>ドゥユハv</b>。あるか聞くときの型。",
+  x:[["Do you have Wi-Fi?","Wi-Fi",null],["Do you have a map?","地図","map"],["Do you have a bigger one?","もっと大きいの","bigger"],["Do you have this in black?","これの黒","black"],["Do you have a pen?","ペン","pen"]]},
+ {n:"Where is ＿?",ja:"〜はどこですか",t:"Where is the を<b>ウェアリズァ</b>。場所を聞く型。",
+  x:[["Where is the station?","駅","station"],["Where is the bathroom?","トイレ","bathroom"],["Where is the bus stop?","バス停","bus"],["Where is the exit?","出口","exit"],["Where is the elevator?","エレベーター","elevator"]]},
+ {n:"How much is ＿?",ja:"〜はいくらですか",t:"How much is を<b>ハウマチイz</b>。値段を聞く型。",
+  x:[["How much is this?","これ",null],["How much is that one?","あれ",null],["How much is a ticket?","チケット","ticket"],["How much is this bag?","このかばん","bag"],["How much is the coffee?","コーヒー","coffee"]]},
+ {n:"Is it ＿?",ja:"〜ですか",t:"Is it を<b>イジッ</b>。2語＋1語で聞ける型。",
+  x:[["Is it far?","遠い","far"],["Is it open?","開いている","open"],["Is it free?","無料","free"],["Is it spicy?","辛い","spicy"],["Is it okay?","大丈夫","okay"]]},
+ {n:"I'm ＿.",ja:"私は〜です",t:"I'm は<b>アイム</b>。自分の状態を伝える型。",
+  x:[["I'm lost.","道に迷った","lost"],["I'm from Japan.","日本から来た","japan"],["I'm just looking.","見ているだけ","looking"],["I'm fine.","大丈夫","fine"],["I'm allergic to nuts.","ナッツアレルギー","allergic"]]},
+ {n:"No ＿, please.",ja:"〜抜きでお願いします",t:"No＋物＋please。苦手なものを抜いてもらう型。",
+  x:[["No onions, please.","玉ねぎ","onions"],["No ice, please.","氷","ice"],["No sugar, please.","砂糖","sugar"],["No cheese, please.","チーズ","cheese"],["No milk, please.","牛乳","milk"]]},
+ {n:"Could you ＿?",ja:"〜してもらえますか",t:"Could you は<b>クッジュ</b>。人に動いてもらう型。",
+  x:[["Could you say that again?","もう一度言う","again"],["Could you speak slowly?","ゆっくり話す","slowly"],["Could you help me?","助ける","help"],["Could you take our picture?","写真を撮る","picture"],["Could you write it down?","書く","write"]]},
+ {n:"What time ＿?",ja:"何時に〜",t:"What time の後に「何が」を置く。時間を聞く型。",
+  x:[["What time is breakfast?","朝食","breakfast"],["What time does it open?","開く","open"],["What time does it close?","閉まる","close"],["What time is checkout?","チェックアウト","checkout"],["What time does the bus leave?","バスが出る","leave"]]},
+ {n:"I'd like ＿, please.",ja:"〜をいただけますか",t:"I'd like は<b>アイドライク</b>。please より少し丁寧な頼み方。",
+  x:[["I'd like a coffee, please.","コーヒー","coffee"],["I'd like this one, please.","これ",null],["I'd like a window seat, please.","窓側の席","window"],["I'd like two tickets, please.","チケット2枚","tickets"],["I'd like the chicken, please.","チキン","chicken"]]},
+ {n:"Can you take me to ＿?",ja:"〜まで行ってもらえますか",t:"タクシーの型。to の後に行き先。",
+  x:[["Can you take me to the airport?","空港","airport"],["Can you take me to this hotel?","このホテル","hotel"],["Can you take me to the station?","駅","station"],["Can you take me to this address?","この住所","address"],["Can you take me to downtown?","中心街","downtown"]]}
+];
+
+/* ---------- 定数 ---------- */
 const KEY='tabi50.v1';
 const DAY=86400000;
 const INTERVALS=[1*DAY,3*DAY,7*DAY,14*DAY,30*DAY];
@@ -272,68 +394,76 @@ const HESITATE_MS=2500;   // 声が出るまでこれ以上かかったら「迷
 const MATCH_MIN=0.6;      // 目標文の単語のうち、この割合が聞き取れたら「通じた」
 const MIN_HOLD_MS=300;    // これより短い押下は「押し間違い」扱い
 const MAX_HOLD_MS=15000;  // 押しっぱなしの保険
+const PER_SESSION=5;
 
-let state={cards:{},updatedAt:0};
+/* ---------- 段階ごとのカード（形をそろえる） ----------
+   card = {s:場面, j:状況(日本語), h?:相手の一言, hj?:その意味, e:言う英文, a:[別解], must?:必須語, m:意味, t:コツ} */
+const DECKS={
+  s1: PHRASES.map(p=>({s:p.s,j:p.j,e:p.e,a:[p.e],m:p.m,t:p.t})),
+  s2: EXCHANGES.map(x=>({s:x.s,j:x.j,h:x.h,hj:x.hj,e:x.e,a:[x.e].concat(x.a||[]),m:x.m,t:x.t})),
+  s3: PATTERNS.flatMap((p,pi)=>p.x.map(([e,ja,must])=>({s:'型 '+(pi+1)+' · '+p.n,j:p.ja.replace('〜','「'+ja+'」')+'、と伝える。',e:e,a:[e],must:must,m:p.ja.replace('〜',ja),t:p.t})))
+};
+const STAGES=[
+  {id:'s1',order:1,title:'言える',sub:'50文が迷わず口から出る',deck:'s1',goal:40},
+  {id:'s2',order:2,title:'聞いて返せる',sub:'相手の一言を聞き取って、正しく返す',deck:'s2',goal:30},
+  {id:'s5',order:3,title:'前日リハーサル',sub:'明日行く場面だけを選んで、通しで回す',deck:'s1',rehearsal:true},
+  {id:'s3',order:4,title:'型で増やせる',sub:'12の型に言葉を入れ替えて、300文にする',deck:'s3',goal:45},
+  {id:'s4',order:5,title:'場面を通せる',sub:'店員役のAIと、注文から会計まで',locked:'準備中'}
+];
+const SCENE_GROUPS=[
+  {name:'空港・機内',scenes:['機内','入国審査','税関','空港']},
+  {name:'カフェ・食事',scenes:['カフェ','食事']},
+  {name:'買い物',scenes:['買い物']},
+  {name:'ホテル',scenes:['ホテル']},
+  {name:'移動',scenes:['移動']},
+  {name:'困ったとき・雑談',scenes:['困ったとき','どこでも','旅先で']}
+];
+
+/* ---------- 保存 ---------- */
+let state=null;
 let session=null;
-let tries=0;
+let tries=0, tryMarks=[];
 let attemptToken=0;
 let rec=null;
 let micState='unknown';   // unknown | ok | blocked
+let holding=false, holdAt=0;
 
-/* ---------- storage ---------- */
-function blankState(){
-  const c={};
-  for(let i=0;i<PHRASES.length;i++) c[i]={learned:false,box:0,due:0,seen:false};
-  return {cards:c,updatedAt:0};
+function blankStore(n){ const c={}; for(let i=0;i<n;i++) c[i]={learned:false,box:0,due:0,seen:false}; return c; }
+function blankState(){ return {cards:blankStore(DECKS.s1.length), s2:blankStore(DECKS.s2.length), s3:blankStore(DECKS.s3.length), updatedAt:0}; }
+function normStore(raw,n){
+  const b=blankStore(n);
+  if(!raw||typeof raw!=='object') return b;
+  for(let i=0;i<n;i++){ const s=raw[i]; if(s&&typeof s==='object') b[i]={learned:!!s.learned,box:Math.max(0,Math.min(5,Number(s.box)||0)),due:Number(s.due)||0,seen:!!s.seen}; }
+  return b;
 }
 function normalizeState(raw){
   const base=blankState();
-  if(!raw||typeof raw!=='object'||!raw.cards) return base;
-  for(let i=0;i<PHRASES.length;i++){
-    const s=raw.cards[i];
-    if(s&&typeof s==='object'){
-      base.cards[i]={
-        learned:!!s.learned,
-        box:Math.max(0,Math.min(5,Number(s.box)||0)),
-        due:Number(s.due)||0,
-        seen:!!s.seen
-      };
-    }
-  }
+  if(!raw||typeof raw!=='object') return base;
+  base.cards=normStore(raw.cards,DECKS.s1.length);
+  base.s2=normStore(raw.s2,DECKS.s2.length);
+  base.s3=normStore(raw.s3,DECKS.s3.length);
   base.updatedAt=Number(raw.updatedAt)||0;
   return base;
 }
-function loadLocal(){
-  try{ return normalizeState(JSON.parse(localStorage.getItem(KEY))); }
-  catch(e){ return blankState(); }
-}
-function save(){
-  state.updatedAt=Date.now();
-  try{ localStorage.setItem(KEY,JSON.stringify(state)); }catch(e){}
-}
+function storeOf(deck){ return deck==='s1'?state.cards:state[deck]; }
+function loadLocal(){ try{ return normalizeState(JSON.parse(localStorage.getItem(KEY))); }catch(e){ return blankState(); } }
+function save(){ state.updatedAt=Date.now(); try{ localStorage.setItem(KEY,JSON.stringify(state)); }catch(e){} }
 
-/* ---------- 引き継ぎ（保管庫は開き方ごとに別なので、コードで移す） ---------- */
+/* ---------- 引き継ぎ ---------- */
+function rowsOf(store,n){ const now=Date.now(),r=[]; for(let i=0;i<n;i++){ const c=store[i]; r.push([c.learned?1:0,c.seen?1:0,c.box,Math.max(0,Math.round((c.due-now)/DAY))]); } return r; }
+function storeFromRows(rows,n){ const now=Date.now(),b=blankStore(n); (rows||[]).slice(0,n).forEach((r,i)=>{ b[i]={learned:!!r[0],seen:!!r[1],box:Math.max(0,Math.min(5,Number(r[2])||0)),due:now+(Number(r[3])||0)*DAY}; }); return b; }
 function exportCode(){
-  const now=Date.now();
-  const rows=[];
-  for(let i=0;i<PHRASES.length;i++){
-    const c=state.cards[i];
-    rows.push([c.learned?1:0, c.seen?1:0, c.box, Math.max(0,Math.round((c.due-now)/DAY))]);
-  }
-  const json=JSON.stringify({v:1,rows});
+  const json=JSON.stringify({v:2,s1:rowsOf(state.cards,DECKS.s1.length),s2:rowsOf(state.s2,DECKS.s2.length),s3:rowsOf(state.s3,DECKS.s3.length)});
   return 'T50-'+btoa(unescape(encodeURIComponent(json))).replace(/=+$/,'');
 }
 function importCode(code){
   const m=String(code).trim().match(/^T50-([A-Za-z0-9+/]+)$/);
   if(!m) throw new Error('コードの形が違います。「T50-」から始まる文字列を貼ってください。');
-  const json=decodeURIComponent(escape(atob(m[1])));
-  const obj=JSON.parse(json);
-  if(!obj||obj.v!==1||!Array.isArray(obj.rows)||obj.rows.length!==PHRASES.length) throw new Error('このコードは読めませんでした。');
-  const now=Date.now();
+  const obj=JSON.parse(decodeURIComponent(escape(atob(m[1]))));
   const fresh=blankState();
-  obj.rows.forEach((r,i)=>{
-    fresh.cards[i]={learned:!!r[0], seen:!!r[1], box:Math.max(0,Math.min(5,Number(r[2])||0)), due:now+(Number(r[3])||0)*DAY};
-  });
+  if(obj&&obj.v===1&&Array.isArray(obj.rows)) fresh.cards=storeFromRows(obj.rows,DECKS.s1.length);
+  else if(obj&&obj.v===2){ fresh.cards=storeFromRows(obj.s1,DECKS.s1.length); fresh.s2=storeFromRows(obj.s2,DECKS.s2.length); fresh.s3=storeFromRows(obj.s3,DECKS.s3.length); }
+  else throw new Error('このコードは読めませんでした。');
   state=fresh; save();
 }
 
@@ -341,136 +471,99 @@ function importCode(code){
 let voice=null;
 function pickVoice(){
   if(!('speechSynthesis' in window)) return null;
-  const vs=speechSynthesis.getVoices();
-  if(!vs.length) return null;
-  const en=vs.filter(v=>/^en[-_]/i.test(v.lang));
-  if(!en.length) return null;
-  return en.find(v=>/samantha|google us english|aria|jenny/i.test(v.name))
-      || en.find(v=>/^en[-_]US/i.test(v.lang))
-      || en[0];
+  const vs=speechSynthesis.getVoices(); if(!vs.length) return null;
+  const en=vs.filter(v=>/^en[-_]/i.test(v.lang)); if(!en.length) return null;
+  return en.find(v=>/samantha|google us english|aria|jenny/i.test(v.name)) || en.find(v=>/^en[-_]US/i.test(v.lang)) || en[0];
 }
-if('speechSynthesis' in window){
-  speechSynthesis.addEventListener('voiceschanged',()=>{voice=pickVoice();});
-  voice=pickVoice();
-}
+if('speechSynthesis' in window){ speechSynthesis.addEventListener('voiceschanged',()=>{voice=pickVoice();}); voice=pickVoice(); }
 function speak(text,rate){
   if(!('speechSynthesis' in window)) return false;
-  try{
-    speechSynthesis.cancel();
-    if(!voice) voice=pickVoice();
-    const u=new SpeechSynthesisUtterance(text);
-    u.lang='en-US'; u.rate=rate; u.pitch=1;
-    if(voice) u.voice=voice;
-    speechSynthesis.speak(u);
-    return true;
-  }catch(e){ return false; }
+  try{ speechSynthesis.cancel(); if(!voice) voice=pickVoice();
+    const u=new SpeechSynthesisUtterance(text); u.lang='en-US'; u.rate=rate; u.pitch=1; if(voice) u.voice=voice;
+    speechSynthesis.speak(u); return true; }catch(e){ return false; }
 }
-function stopAudio(){
-  if('speechSynthesis' in window){ try{ speechSynthesis.cancel(); }catch(e){} }
-}
+function stopAudio(){ if('speechSynthesis' in window){ try{ speechSynthesis.cancel(); }catch(e){} } }
 
-/* ---------- 音声入力 ---------- */
+/* ---------- 判定（通じたか） ---------- */
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-
-function normalizeWords(s){
-  return s.toLowerCase().replace(/[^a-z0-9\s']/g,' ').replace(/\s+/g,' ').trim().split(' ').filter(Boolean);
-}
+function normalizeWords(s){ return s.toLowerCase().replace(/[^a-z0-9\s']/g,' ').replace(/\s+/g,' ').trim().split(' ').filter(Boolean); }
 function lev(a,b){
-  const m=a.length,n=b.length;
-  if(Math.abs(m-n)>2) return 3;
+  const m=a.length,n=b.length; if(Math.abs(m-n)>2) return 3;
   let prev=Array.from({length:n+1},(_,i)=>i),cur=new Array(n+1);
-  for(let i=1;i<=m;i++){
-    cur[0]=i;
-    for(let j=1;j<=n;j++){
-      cur[j]=Math.min(prev[j]+1,cur[j-1]+1,prev[j-1]+(a[i-1]===b[j-1]?0:1));
-    }
-    [prev,cur]=[cur,prev];
-  }
+  for(let i=1;i<=m;i++){ cur[0]=i; for(let j=1;j<=n;j++){ cur[j]=Math.min(prev[j]+1,cur[j-1]+1,prev[j-1]+(a[i-1]===b[j-1]?0:1)); } [prev,cur]=[cur,prev]; }
   return prev[n];
 }
-// 「通じたか」で判定する。目標文の単語が、聞き取られた文にどれだけ含まれるか。
 function matchScore(said,target){
-  const pool=normalizeWords(said);
-  const want=normalizeWords(target);
-  if(!want.length) return 0;
+  const pool=normalizeWords(said), want=normalizeWords(target); if(!want.length) return 0;
   let hit=0;
-  for(const w of want){
-    let idx=pool.indexOf(w);
-    if(idx<0 && w.length>3){
-      idx=pool.findIndex(x=>Math.abs(x.length-w.length)<=2 && lev(x,w)<=1);
-    }
-    if(idx>=0){ pool.splice(idx,1); hit++; }
-  }
+  for(const w of want){ let idx=pool.indexOf(w); if(idx<0&&w.length>3) idx=pool.findIndex(x=>Math.abs(x.length-w.length)<=2&&lev(x,w)<=1); if(idx>=0){ pool.splice(idx,1); hit++; } }
   return hit/want.length;
+}
+function hasWord(said,word){ const w=normalizeWords(word)[0]; if(!w) return true; return normalizeWords(said).some(x=>x===w||(w.length>3&&Math.abs(x.length-w.length)<=2&&lev(x,w)<=1)); }
+// 別解のうち一番近いものの点数。必須語が無ければ 0 扱い。
+function judgeText(said,card){
+  let best=0; for(const t of card.a){ best=Math.max(best,matchScore(said,t)); }
+  if(card.must&&!hasWord(said,card.must)) return {score:best,missing:card.must};
+  return {score:best,missing:null};
 }
 function esc(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 
 /* ---------- 出題順（Leitner） ---------- */
-function todayQueue(){
-  const now=Date.now();
-  const ids=Object.keys(state.cards).map(Number);
-  const reviews=ids.filter(i=>state.cards[i].seen&&state.cards[i].due<=now)
-                   .sort((a,b)=>state.cards[a].due-state.cards[b].due);
-  const fresh=ids.filter(i=>!state.cards[i].seen);
+function dueQueue(store,n){
+  const now=Date.now(); const ids=[...Array(n).keys()];
+  const reviews=ids.filter(i=>store[i].seen&&store[i].due<=now).sort((a,b)=>store[a].due-store[b].due);
+  const fresh=ids.filter(i=>!store[i].seen);
   const q=reviews.slice(0,3);
-  for(const i of fresh){ if(q.length>=5) break; q.push(i); }
-  for(const i of reviews.slice(3)){ if(q.length>=5) break; q.push(i); }
+  for(const i of fresh){ if(q.length>=PER_SESSION) break; q.push(i); }
+  for(const i of reviews.slice(3)){ if(q.length>=PER_SESSION) break; q.push(i); }
   return q;
 }
-function stockCount(){ return Object.values(state.cards).filter(c=>c.learned).length; }
-function markPassed(i){
-  const c=state.cards[i];
-  c.seen=true; c.learned=true;
-  c.box=Math.min(c.box+1,5);
-  c.due=Date.now()+INTERVALS[c.box-1];
-  save();
-}
-function markSkipped(i){
-  const c=state.cards[i];
-  c.seen=true;
-  c.due=Date.now()+DAY;   // 在庫は減らさない。明日また出るだけ。
-  save();
+function learnedCount(store){ return Object.values(store).filter(c=>c.learned).length; }
+function markPassed(store,i){ const c=store[i]; c.seen=true; c.learned=true; c.box=Math.min(c.box+1,5); c.due=Date.now()+INTERVALS[c.box-1]; save(); }
+function markSkipped(store,i){ const c=store[i]; c.seen=true; c.due=Date.now()+DAY; save(); }
+function recommendedStage(){
+  for(const st of STAGES){ if(st.locked||st.rehearsal) continue; if(learnedCount(storeOf(st.deck))<st.goal) return st.id; }
+  return 's5';
 }
 
 /* ---------- DOM ---------- */
 const $=id=>document.getElementById(id);
-const scHome=$('scHome'),scCard=$('scCard'),scDone=$('scDone');
-function show(which){
-  scHome.hidden=which!=='home';
-  scCard.hidden=which!=='card';
-  scDone.hidden=which!=='done';
-}
-function abortAttempt(){
-  attemptToken++; holding=false;
-  if(rec){ try{ rec.abort(); }catch(e){} rec=null; }
-  stopAudio();
-}
+function show(which){ for(const [k,el] of Object.entries({home:$('scHome'),pick:$('scPick'),card:$('scCard'),done:$('scDone')})) el.hidden=(k!==which); }
+function abortAttempt(){ attemptToken++; holding=false; if(rec){ try{ rec.abort(); }catch(e){} rec=null; } stopAudio(); }
 
 function render(){
-  const n=stockCount();
-  $('stockN').textContent=n;
-  $('meterFill').style.width=(n/PHRASES.length*100)+'%';
+  const total=DECKS.s1.length+DECKS.s2.length+DECKS.s3.length;
+  const n=learnedCount(state.cards)+learnedCount(state.s2)+learnedCount(state.s3);
+  $('stockN').textContent=n; $('stockT').textContent=total;
+  $('meterFill').style.width=(n/total*100)+'%';
 
-  const visa=$('visa');
-  visa.textContent='';
-  for(let i=0;i<PHRASES.length;i++){
-    const d=document.createElement('div');
-    const done=state.cards[i].learned;
-    d.className='slot '+(done?'done':'empty');
-    d.textContent=i+1;
-    if(done) d.style.transform='rotate('+(((i*37)%11)-5)+'deg)';
-    d.title=done?PHRASES[i].e:'まだ';
-    visa.appendChild(d);
+  // 学びの地図
+  const rec_=recommendedStage();
+  const map=$('map'); map.textContent='';
+  for(const st of STAGES){
+    const b=document.createElement('button'); b.className='stage'; b.dataset.stage=st.id;
+    let cnt='',bar='';
+    if(!st.locked){
+      const store=storeOf(st.deck), tot=DECKS[st.deck].length, l=learnedCount(store);
+      if(!st.rehearsal){ cnt=l+' / '+tot; bar='<div class="bar"><i style="width:'+(l/tot*100)+'%"></i></div>'; }
+    }
+    const badge = st.locked ? '<span class="badge soft">'+st.locked+'</span>'
+                : (st.id===rec_ ? '<span class="badge">次はここ</span>' : (st.rehearsal?'<span class="badge soft">旅の前日に</span>':''));
+    b.innerHTML='<span class="num">'+st.order+'</span><span class="body"><span class="ttl">'+st.title+badge+'</span><span class="sub">'+st.sub+'</span>'+bar+'</span><span class="cnt">'+cnt+'</span>';
+    if(st.locked) b.disabled=true;
+    map.appendChild(b);
   }
-  $('visaHint').textContent = n===0 ? 'まだ空です' : n+'つ 押した';
 
-  const q=todayQueue();
-  $('startBtn').disabled=q.length===0;
-  $('startBtn').textContent = q.length===0 ? '今日の分は終わりました'
-    : (n===0 ? 'はじめる（5枚・3分）' : '今日の'+q.length+'枚をはじめる');
-  $('homeNote').textContent = q.length===0
-    ? '明日また、覚えた文が混ざって出てきます。'
-    : (n===0 ? '1枚目は3語です。声に出すだけ。' : '覚えた文も混ぜて出します。');
+  // 査証欄（段階1）
+  const visa=$('visa'); visa.textContent='';
+  for(let i=0;i<DECKS.s1.length;i++){
+    const d=document.createElement('div'); const done=state.cards[i].learned;
+    d.className='slot '+(done?'done':'empty'); d.textContent=i+1;
+    if(done) d.style.transform='rotate('+(((i*37)%11)-5)+'deg)';
+    d.title=done?DECKS.s1[i].e:'まだ'; visa.appendChild(d);
+  }
+  const l1=learnedCount(state.cards);
+  $('visaHint').textContent = l1===0 ? 'まだ空です' : l1+'つ 押した';
 
   $('foot').textContent = micState==='blocked'
     ? 'この画面ではマイクが使えないため、判定ができません。'
@@ -482,171 +575,128 @@ function blockMic(msg){
   micState='blocked'; holding=false;
   $('sayBtn').hidden=true; $('sayBtn').classList.remove('hold');
   $('verdict').textContent='';
-  $('blocker').innerHTML='<b>マイクが使えません。</b><br>'+esc(msg)+'<br>iPhone は Safari、Android は Chrome で、このページを直接開いてください。';
+  $('blocker').innerHTML='<b>マイクが使えません。</b><br>'+esc(msg)+'<br>iPhone は Safari か Chrome、Android は Chrome で、このページを直接開いてください。';
   $('blocker').hidden=false;
   render();
 }
 
-/* ---------- カード ---------- */
+/* ---------- セッション ---------- */
+function startSession(stageId,ids){
+  const st=STAGES.find(s=>s.id===stageId);
+  session={stage:st,deck:st.deck,queue:ids,idx:0,gained:0,passed:0,lats:[]};
+  openCard();
+}
+function startStage(stageId){
+  const st=STAGES.find(s=>s.id===stageId);
+  if(!st||st.locked) return;
+  if(st.rehearsal){ openPicker(); return; }
+  const store=storeOf(st.deck); const q=dueQueue(store,DECKS[st.deck].length);
+  if(!q.length){ $('foot').textContent='この段階の今日の分は終わりました。明日また、覚えた文が混ざって出ます。'; return; }
+  startSession(stageId,q);
+}
+function openPicker(){
+  const box=$('picker'); box.textContent='';
+  SCENE_GROUPS.forEach((g,gi)=>{
+    const n=DECKS.s1.filter(c=>g.scenes.includes(c.s)).length;
+    const l=document.createElement('label');
+    l.innerHTML='<input type="checkbox" value="'+gi+'"><span>'+g.name+'</span><small>'+n+' 文</small>';
+    box.appendChild(l);
+  });
+  $('pickStart').disabled=true;
+  show('pick');
+}
+function curCard(){ return DECKS[session.deck][session.queue[session.idx]]; }
+function curStore(){ return storeOf(session.deck); }
 function curId(){ return session.queue[session.idx]; }
 
-function paintTries(marks){
-  const d=$('tries'); d.textContent='';
-  for(let k=0;k<MAX_TRIES;k++){
-    const i=document.createElement('i');
-    if(marks[k]) i.className=marks[k];
-    d.appendChild(i);
-  }
-}
-let tryMarks=[];
+function paintTries(marks){ const d=$('tries'); d.textContent=''; for(let k=0;k<MAX_TRIES;k++){ const i=document.createElement('i'); if(marks[k]) i.className=marks[k]; d.appendChild(i); } }
 
 function openCard(){
-  abortAttempt();
-  tries=0; tryMarks=[];
-  const p=PHRASES[curId()];
-
+  abortAttempt(); tries=0; tryMarks=[];
+  const c=curCard();
   $('dots').textContent='';
-  for(let k=0;k<session.queue.length;k++){
-    const s=document.createElement('span');
-    if(k<=session.idx) s.className='on';
-    $('dots').appendChild(s);
-  }
-
-  $('scene').textContent=p.s;
-  $('situation').textContent=p.j;
-  $('stageNote').textContent='まず耳で覚えます。英文はまだ出しません。';
-  $('stageListen').hidden=false;
-  $('answer').hidden=true;
-  $('slowBtn').disabled=true;
-  $('sayBtn').disabled=true;
-  $('sayBtn').hidden=(micState==='blocked');
-  $('sayBtn').textContent='押しながら 話す'; $('sayBtn').classList.remove('hold');
-  $('verdict').textContent='';
-  $('peek').hidden=true; $('peek').textContent='';
-  $('revealBtn').hidden=false;
+  for(let k=0;k<session.queue.length;k++){ const s=document.createElement('span'); if(k<=session.idx) s.className='on'; $('dots').appendChild(s); }
+  $('scene').textContent=(session.stage.rehearsal?'リハーサル · ':'')+c.s;
+  $('situation').textContent=c.j;
+  $('stageNote').textContent = c.h ? '相手の一言を聞いて、返します。文字は出しません。' : 'まず耳で覚えます。英文はまだ出しません。';
+  $('playBtn').textContent = c.h ? '相手の言葉を聞く' : '聞く';
+  $('stageListen').hidden=false; $('answer').hidden=true;
+  $('slowBtn').disabled=true; $('sayBtn').disabled=true;
+  $('sayBtn').hidden=(micState==='blocked'); $('sayBtn').textContent='押しながら 話す'; $('sayBtn').classList.remove('hold');
+  $('verdict').textContent=''; $('peek').hidden=true; $('peek').textContent='';
+  $('revealBtn').hidden=false; $('revealBtn').textContent = c.h ? '相手の言葉と答えを見る' : '英文を見る';
   $('blocker').hidden=(micState!=='blocked');
   paintTries(tryMarks);
-  if(!SR && micState!=='blocked') blockMic('このブラウザは音声認識に対応していません。');
+  if(!SR&&micState!=='blocked') blockMic('このブラウザは音声認識に対応していません。');
   show('card');
 }
-
-function sealEl(i){
-  const d=document.createElement('div');
-  d.className='seal-mark land';
-  d.innerHTML='通じた<br>'+(i+1);
-  return d;
-}
+function sealEl(i){ const d=document.createElement('div'); d.className='seal-mark land'; d.innerHTML='通じた<br>'+(i+1); return d; }
 function revealText(){
-  $('peek').textContent=PHRASES[curId()].e;
-  $('peek').hidden=false;
-  $('revealBtn').hidden=true;
+  const c=curCard();
+  $('peek').innerHTML = c.h ? '<span class="hear-ja">相手: '+esc(c.h)+'（'+esc(c.hj)+'）</span><br>'+esc(c.e) : esc(c.e);
+  $('peek').hidden=false; $('revealBtn').hidden=true;
 }
-
-let holding=false, holdAt=0;
+function playCue(rate){ const c=curCard(); return speak(c.h||c.e,rate); }
 
 function listen(){
-  const p=PHRASES[curId()];
-  const my=++attemptToken;
-  stopAudio();
-
-  let r;
-  try{ r=new SR(); }
-  catch(e){ blockMic('音声認識を起動できませんでした。'); return; }
-  rec=r;
-  r.lang='en-US';
-  r.continuous=true;         // 無音で勝手に切らない。離した時に stop() する
-  r.interimResults=true;     // 最初の中間結果で「声が出た時刻」を取るため
-  r.maxAlternatives=5;
-
+  const c=curCard(); const my=++attemptToken; stopAudio();
+  let r; try{ r=new SR(); }catch(e){ blockMic('音声認識を起動できませんでした。'); return; }
+  rec=r; r.lang='en-US'; r.continuous=true; r.interimResults=true; r.maxAlternatives=5;
   const v=$('verdict');
   v.innerHTML='<span class="listening"></span><p>聞いています。言い終わったら指を離してください。</p>';
-  $('sayBtn').textContent='離すと判定';
-  $('sayBtn').classList.add('hold');
-
+  $('sayBtn').textContent='離すと判定'; $('sayBtn').classList.add('hold');
   let t0=performance.now(), tSpeech=null, best=0, bestText='', settled=false;
-
-  r.onspeechstart=()=>{ if(my===attemptToken && tSpeech===null) tSpeech=performance.now(); };
+  r.onspeechstart=()=>{ if(my===attemptToken&&tSpeech===null) tSpeech=performance.now(); };
   r.onresult=ev=>{
     if(my!==attemptToken) return;
     if(tSpeech===null) tSpeech=performance.now();
-    for(let i=ev.resultIndex;i<ev.results.length;i++){
-      const res=ev.results[i];
-      if(!res.isFinal) continue;
-      for(let k=0;k<res.length;k++){
-        const alt=res[k].transcript||'';
-        const sc=matchScore(alt,p.e);
-        if(!bestText || sc>best){ best=sc; bestText=alt; }
-      }
-    }
+    for(let i=ev.resultIndex;i<ev.results.length;i++){ const res=ev.results[i]; if(!res.isFinal) continue;
+      for(let k=0;k<res.length;k++){ const alt=res[k].transcript||''; const sc=judgeText(alt,c).score; if(!bestText||sc>best){ best=sc; bestText=alt; } } }
   };
+  const resetBtn=()=>{ $('sayBtn').classList.remove('hold'); $('sayBtn').textContent='もう一度 押しながら 話す'; };
   r.onerror=ev=>{
-    if(my!==attemptToken) return;
-    settled=true; clearTimeout(watchdog);
-    try{ r.abort(); }catch(e){}   // マイクを手放す
-    const code=ev.error;
+    if(my!==attemptToken) return; settled=true; clearTimeout(watchdog); try{ r.abort(); }catch(e){}
+    const code=ev.error; resetBtn();
     if(code==='not-allowed'||code==='service-not-allowed'){ blockMic('マイクの使用が許可されていません。ブラウザの設定でこのページのマイクを「許可」にしてください。'); return; }
     if(code==='audio-capture'){ blockMic('マイクが見つかりませんでした。'); return; }
-    $('sayBtn').classList.remove('hold'); $('sayBtn').textContent='もう一度 押しながら 話す';
     if(code==='no-speech'){ v.innerHTML='<p>声が聞こえませんでした。押したまま話して、言い終わってから離してください。</p>'; return; }
     if(code==='network'){ v.innerHTML='<p>認識サービスに届きませんでした。電波を確認して、もう一度。</p>'; return; }
     if(code==='aborted'){ return; }
     v.innerHTML='<p>うまく聞き取れませんでした。もう一度どうぞ。</p>';
   };
-  r.onend=()=>{
-    if(my!==attemptToken || settled) return;
-    settled=true; clearTimeout(watchdog);
-    try{ r.abort(); }catch(e){}   // 判定が済んだらマイクを手放す
-    rec=null;
-    judge();
-  };
-  const watchdog=setTimeout(()=>{ if(my===attemptToken && !settled){ try{ r.stop(); }catch(e){} } },MAX_HOLD_MS);
+  r.onend=()=>{ if(my!==attemptToken||settled) return; settled=true; clearTimeout(watchdog); try{ r.abort(); }catch(e){} rec=null; judge(); };
+  const watchdog=setTimeout(()=>{ if(my===attemptToken&&!settled){ try{ r.stop(); }catch(e){} } },MAX_HOLD_MS);
 
   function judge(){
-    $('sayBtn').classList.remove('hold');
-    $('sayBtn').textContent='もう一度 押しながら 話す';
+    resetBtn();
     if(!bestText){ v.innerHTML='<p>声が聞こえませんでした。ボタンを押したまま話して、言い終わってから離してください。</p>'; return; }
     tries++;
-    const lat = tSpeech!==null ? (tSpeech-t0) : null;
-    const latS = lat!==null ? (lat/1000).toFixed(1) : null;
-
-    if(best>=MATCH_MIN && (lat===null || lat<=HESITATE_MS)){
+    const jr=judgeText(bestText,c);
+    const lat = tSpeech!==null ? (tSpeech-t0) : null; const latS = lat!==null ? (lat/1000).toFixed(1) : null;
+    if(jr.score>=MATCH_MIN && !jr.missing && (lat===null||lat<=HESITATE_MS)){
       tryMarks.push('hit'); paintTries(tryMarks);
-      v.textContent='';
-      v.appendChild(sealEl(curId()));
-      const t=document.createElement('p');
-      t.innerHTML='<b>通じました。</b>'+(latS!==null?' 反応 '+latS+' 秒。':'');
-      v.appendChild(t);
-      setTimeout(()=>pass(lat),700);
-      return;
+      v.textContent=''; v.appendChild(sealEl(curId()));
+      const t=document.createElement('p'); t.innerHTML='<b>通じました。</b>'+(latS!==null?' 反応 '+latS+' 秒。':''); v.appendChild(t);
+      setTimeout(()=>pass(lat),700); return;
     }
     tryMarks.push('miss'); paintTries(tryMarks);
-    if(best>=MATCH_MIN){
-      v.innerHTML='<p><b>通じました。</b>ただ、声が出るまで '+latS+' 秒。<br>もう一度、今度は考えずにすぐ。</p>';
-    }else{
-      v.innerHTML='<p>いまのは <span class="heard">「'+esc(bestText)+'」</span> に聞こえました。<br>もう一度、聞いてから言ってみましょう。</p>';
-    }
-    afterMiss();
-  }
-  function afterMiss(){
+    if(jr.missing) v.innerHTML='<p>いまのは <span class="heard">「'+esc(bestText)+'」</span> に聞こえました。<br>肝心の <b>'+esc(jr.missing)+'</b> が入っていません。</p>';
+    else if(jr.score>=MATCH_MIN) v.innerHTML='<p><b>通じました。</b>ただ、声が出るまで '+latS+' 秒。<br>もう一度、今度は考えずにすぐ。</p>';
+    else v.innerHTML='<p>いまのは <span class="heard">「'+esc(bestText)+'」</span> に聞こえました。<br>もう一度、聞いてから言ってみましょう。</p>';
     if(tries>=MAX_TRIES){ giveUp(); return; }
-    if(tries>=2) revealText();   // 2回外したら文字を見せる。見て言えれば、それでいい。
+    if(tries>=2) revealText();
   }
-
-  try{ r.start(); }
-  catch(e){ v.innerHTML='<p>もう一度どうぞ。</p>'; $('sayBtn').classList.remove('hold'); $('sayBtn').textContent='押しながら 話す'; }
+  try{ r.start(); }catch(e){ v.innerHTML='<p>もう一度どうぞ。</p>'; resetBtn(); }
 }
-
-// 押している間だけマイク。離したら stop() → onend → 判定。
 function holdStart(ev){
-  if(ev && ev.preventDefault) ev.preventDefault();
-  if(holding || $('sayBtn').disabled || $('sayBtn').hidden) return;
+  if(ev&&ev.preventDefault) ev.preventDefault();
+  if(holding||$('sayBtn').disabled||$('sayBtn').hidden) return;
   holding=true; holdAt=performance.now();
-  try{ if(ev && ev.pointerId!==undefined) $('sayBtn').setPointerCapture(ev.pointerId); }catch(e){}
+  try{ if(ev&&ev.pointerId!==undefined) $('sayBtn').setPointerCapture(ev.pointerId); }catch(e){}
   listen();
 }
-function holdEnd(ev){
-  if(!holding) return;
-  holding=false;
+function holdEnd(){
+  if(!holding) return; holding=false;
   const held=performance.now()-holdAt;
   if(rec){
     if(held<MIN_HOLD_MS){ abortAttempt(); $('sayBtn').classList.remove('hold'); $('sayBtn').textContent='押しながら 話す'; $('verdict').innerHTML='<p>押している間だけ聞いています。押したまま話して、言い終わってから離してください。</p>'; return; }
@@ -655,118 +705,68 @@ function holdEnd(ev){
 }
 
 function pass(lat){
-  const i=curId();
-  const wasNew=!state.cards[i].learned;
-  markPassed(i);
-  if(wasNew) session.gained++;
-  if(lat!==null) session.lats.push(lat);
-  render();
-  revealAnswer(i,true,lat);
+  const i=curId(), store=curStore(); const wasNew=!store[i].learned;
+  markPassed(store,i); if(wasNew) session.gained++; session.passed++; if(lat!==null) session.lats.push(lat);
+  render(); revealAnswer(true,lat);
 }
-function giveUp(){
-  const i=curId();
-  markSkipped(i);
-  render();
-  revealAnswer(i,false,null);
-}
-
-function revealAnswer(i,passed,lat){
-  const p=PHRASES[i];
+function giveUp(){ markSkipped(curStore(),curId()); render(); revealAnswer(false,null); }
+function revealAnswer(passed,lat){
+  const c=curCard(), i=curId();
   $('stageListen').hidden=true;
-  $('enText').textContent=p.e;
-  $('meanText').textContent=p.m;
-  $('tipText').innerHTML=p.t;
-  const v=$('answerVerdict');
-  v.textContent='';
-  if(passed){
-    v.appendChild(sealEl(i));
-    const t=document.createElement('p');
-    t.innerHTML='<b>在庫に入りました。</b>';
-    v.appendChild(t);
-    $('stat').textContent = (lat!==null ? '反応 '+(lat/1000).toFixed(1)+' 秒 · ' : '') + tries+' 回目で通じた';
-  }else{
-    const t=document.createElement('p');
-    t.textContent='今日はここまで。この文は明日また出します。';
-    v.appendChild(t);
-    $('stat').textContent = tries+' 回 試した';
-  }
+  $('hearBox').hidden=!c.h; if(c.h){ $('hearText').textContent=c.h; $('hearJa').textContent=c.hj; }
+  $('enText').textContent=c.e; $('meanText').textContent=c.m; $('tipText').innerHTML=c.t;
+  const v=$('answerVerdict'); v.textContent='';
+  if(passed){ v.appendChild(sealEl(i)); const t=document.createElement('p'); t.innerHTML='<b>在庫に入りました。</b>'; v.appendChild(t);
+    $('stat').textContent=(lat!==null?'反応 '+(lat/1000).toFixed(1)+' 秒 · ':'')+tries+' 回目で通じた'; }
+  else { const t=document.createElement('p'); t.textContent='今日はここまで。この文は明日また出します。'; v.appendChild(t); $('stat').textContent=tries+' 回 試した'; }
+  $('replayBtn').textContent = c.h ? '答えの音を聞く' : 'もう一度聞く';
   $('answer').hidden=false;
   $('nextBtn').textContent = session.idx>=session.queue.length-1 ? '終わる' : '次へ';
 }
+function finishSession(){
+  const st=session.stage; const avg=session.lats.length?(session.lats.reduce((a,b)=>a+b,0)/session.lats.length/1000).toFixed(1):null;
+  if(st.rehearsal){ $('doneLabel').textContent='通じた文'; $('gained').textContent=session.passed+' / '+session.queue.length;
+    $('doneMsg').textContent = session.passed===session.queue.length ? '全部通じました。明日はこのまま行けます。' : '通じなかった文は、明日また出ます。もう一度回してもいい。'; }
+  else { $('doneLabel').textContent='今日ふえた判子'; $('gained').textContent=session.gained;
+    const l=learnedCount(storeOf(st.deck)), tot=DECKS[st.deck].length;
+    $('doneMsg').textContent = l>=tot ? 'この段階はすべて在庫に入りました。地図の次へ。' : '「'+st.title+'」はいま '+l+' / '+tot+'。明日もまた5枚。'; }
+  $('doneStat').textContent = avg!==null ? '今日の平均反応 '+avg+' 秒' : '';
+  show('done');
+}
 
 /* ---------- イベント ---------- */
-$('startBtn').addEventListener('click',()=>{
-  const q=todayQueue();
-  if(!q.length) return;
-  session={queue:q,idx:0,gained:0,lats:[]};
-  openCard();
+$('map').addEventListener('click',e=>{ const b=e.target.closest('.stage'); if(b&&!b.disabled) startStage(b.dataset.stage); });
+$('picker').addEventListener('change',()=>{ $('pickStart').disabled=!$('picker').querySelector('input:checked'); });
+$('pickStart').addEventListener('click',()=>{
+  const gs=[...$('picker').querySelectorAll('input:checked')].map(i=>SCENE_GROUPS[Number(i.value)]);
+  const scenes=gs.flatMap(g=>g.scenes);
+  const ids=DECKS.s1.map((c,i)=>scenes.includes(c.s)?i:-1).filter(i=>i>=0);
+  if(!ids.length) return;
+  startSession('s5',ids);
 });
+$('pickBack').addEventListener('click',()=>{ render(); show('home'); });
 $('playBtn').addEventListener('click',()=>{
-  const p=PHRASES[curId()];
-  const ok=speak(p.e,0.85);
-  $('slowBtn').disabled=false;
+  const ok=playCue(0.85); $('slowBtn').disabled=false;
   if(micState!=='blocked') $('sayBtn').disabled=false;
-  if(!ok){
-    $('stageNote').textContent='このブラウザでは音が出せません。英文を見ながら声に出してください。';
-    revealText();
-  }else{
-    $('stageNote').textContent='赤いボタンを押している間だけマイクがオンになります。押しながら言って、離す。';
-  }
+  if(!ok){ $('stageNote').textContent='このブラウザでは音が出せません。文字を見ながら声に出してください。'; revealText(); }
+  else { $('stageNote').textContent = curCard().h ? '聞き取れたら、赤いボタンを押しながら返事をして、離す。' : '赤いボタンを押している間だけマイクがオンになります。押しながら言って、離す。'; }
 });
-$('slowBtn').addEventListener('click',()=>speak(PHRASES[curId()].e,0.6));
-$('replayBtn').addEventListener('click',()=>speak(PHRASES[curId()].e,0.85));
+$('slowBtn').addEventListener('click',()=>playCue(0.6));
+$('replayBtn').addEventListener('click',()=>speak(curCard().e,0.85));
 const sayBtn=$('sayBtn');
-sayBtn.addEventListener('pointerdown',holdStart);
-sayBtn.addEventListener('pointerup',holdEnd);
-sayBtn.addEventListener('pointercancel',holdEnd);
-sayBtn.addEventListener('lostpointercapture',holdEnd);
+sayBtn.addEventListener('pointerdown',holdStart); sayBtn.addEventListener('pointerup',holdEnd);
+sayBtn.addEventListener('pointercancel',holdEnd); sayBtn.addEventListener('lostpointercapture',holdEnd);
 sayBtn.addEventListener('contextmenu',e=>e.preventDefault());
-sayBtn.addEventListener('keydown',e=>{ if((e.key===' '||e.key==='Enter')&&!e.repeat){ holdStart(e); } });
-sayBtn.addEventListener('keyup',e=>{ if(e.key===' '||e.key==='Enter'){ holdEnd(e); } });
+sayBtn.addEventListener('keydown',e=>{ if((e.key===' '||e.key==='Enter')&&!e.repeat) holdStart(e); });
+sayBtn.addEventListener('keyup',e=>{ if(e.key===' '||e.key==='Enter') holdEnd(e); });
 $('revealBtn').addEventListener('click',revealText);
-$('nextBtn').addEventListener('click',()=>{
-  abortAttempt();
-  session.idx++;
-  if(session.idx>=session.queue.length){
-    $('gained').textContent=session.gained;
-    const n=stockCount();
-    const avg = session.lats.length ? (session.lats.reduce((a,b)=>a+b,0)/session.lats.length/1000).toFixed(1) : null;
-    $('doneStat').textContent = avg!==null ? '今日の平均反応 '+avg+' 秒' : '';
-    $('doneMsg').textContent = n>=PHRASES.length
-      ? '50文すべてが在庫に入りました。次の旅で使ってください。'
-      : 'いま言えるのは '+n+' 文。明日もまた5枚。';
-    show('done');
-  }else{
-    openCard();
-  }
-});
-$('quitBtn').addEventListener('click',()=>{
-  abortAttempt();
-  render(); show('home');
-});
+$('nextBtn').addEventListener('click',()=>{ abortAttempt(); session.idx++; if(session.idx>=session.queue.length) finishSession(); else openCard(); });
+$('quitBtn').addEventListener('click',()=>{ abortAttempt(); render(); show('home'); });
 $('backBtn').addEventListener('click',()=>{ render(); show('home'); });
-
-$('xferBtn').addEventListener('click',()=>{
-  const box=$('xfer');
-  box.hidden=!box.hidden;
-  if(!box.hidden){ $('xferOut').value=exportCode(); $('xferMsg').textContent=''; }
-});
+$('xferBtn').addEventListener('click',()=>{ const box=$('xfer'); box.hidden=!box.hidden; if(!box.hidden){ $('xferOut').value=exportCode(); $('xferMsg').textContent=''; } });
 $('xferOut').addEventListener('focus',e=>e.target.select());
-$('xferCopy').addEventListener('click',async()=>{
-  const t=$('xferOut').value;
-  try{ await navigator.clipboard.writeText(t); $('xferMsg').textContent='コピーしました。もう一方の端末（開き方）で貼ってください。'; }
-  catch(e){ $('xferOut').focus(); $('xferOut').select(); $('xferMsg').textContent='長押しでコピーしてください。'; }
-});
-$('xferIn_btn').addEventListener('click',()=>{
-  try{
-    importCode($('xferIn').value);
-    render();
-    $('xferMsg').textContent='復元しました。いま言える文: '+stockCount()+'。';
-    $('xferIn').value='';
-  }catch(e){ $('xferMsg').textContent=e.message; }
-});
-
-// アプリを閉じた・裏に回した時点でマイクを手放す
+$('xferCopy').addEventListener('click',async()=>{ const t=$('xferOut').value; try{ await navigator.clipboard.writeText(t); $('xferMsg').textContent='コピーしました。もう一方の端末（開き方）で貼ってください。'; }catch(e){ $('xferOut').focus(); $('xferOut').select(); $('xferMsg').textContent='長押しでコピーしてください。'; } });
+$('xferIn_btn').addEventListener('click',()=>{ try{ importCode($('xferIn').value); render(); $('xferMsg').textContent='復元しました。判子 '+$('stockN').textContent+'。'; $('xferIn').value=''; }catch(e){ $('xferMsg').textContent=e.message; } });
 document.addEventListener('visibilitychange',()=>{ if(document.hidden) abortAttempt(); });
 window.addEventListener('pagehide',()=>abortAttempt());
 
