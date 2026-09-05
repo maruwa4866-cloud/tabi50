@@ -118,6 +118,20 @@
   .xfer p{margin:0;font-size:13px;color:var(--ink-soft)}
   footer{font-size:11.5px;color:var(--ink-soft);text-align:center;line-height:1.8}
 
+  /* ---- 画像（無ければ自動で非表示） ---- */
+  .hero{width:100%;aspect-ratio:12/5;object-fit:cover;display:block;border-radius:14px;box-shadow:var(--shadow)}
+  .hero[hidden]{display:none}
+  .panel.card{padding:0;overflow:hidden}
+  .panel.card .inner{padding:20px}
+  .scene-img{width:100%;aspect-ratio:3/2;object-fit:cover;display:block;background:var(--line)}
+  .scene-img[hidden]{display:none}
+  .stage .icon{width:44px;height:44px;flex:0 0 44px;border-radius:12px;object-fit:cover;background:var(--paper);display:block;position:relative}
+  .stage .iconwrap{position:relative;flex:0 0 44px;width:44px;height:44px}
+  .stage .iconwrap .num{position:absolute;right:-6px;bottom:-6px;width:20px;height:20px;border-radius:50%;background:var(--surface);border:1.5px solid var(--seal);font-size:11px;line-height:17px;display:block}
+  .stage .iconwrap.noimg{display:grid;place-items:center;background:var(--paper);border-radius:12px}
+  .stage .iconwrap.noimg .num{position:static;border:none;background:none;font-size:15px;line-height:1;width:auto;height:auto}
+  .pick-img{width:44px;height:44px;border-radius:8px;object-fit:cover;background:var(--paper);flex:0 0 44px}
+
   /* ---- 学びの地図（ホーム） ---- */
   .map{display:flex;flex-direction:column;gap:0}
   .stage{display:flex;align-items:center;gap:13px;padding:13px 4px;border-top:1px solid var(--line);background:none;border-left:none;border-right:none;border-bottom:none;border-radius:0;width:100%;text-align:left;color:var(--ink);font-family:var(--jp)}
@@ -153,6 +167,7 @@
 
   <!-- ホーム：学びの地図 -->
   <section class="screen" id="scHome">
+    <img class="hero" id="hero" alt="" hidden>
     <div class="panel">
       <div class="visa-cap">
         <p class="label">学びの地図</p>
@@ -196,7 +211,9 @@
   <section class="screen" id="scCard" hidden>
     <div class="progress-dots" id="dots"></div>
 
-    <div class="panel">
+    <div class="panel card">
+      <img class="scene-img" id="sceneImg" alt="" hidden>
+      <div class="inner">
       <p class="scene" id="scene"></p>
       <p class="situation" id="situation"></p>
 
@@ -234,6 +251,7 @@
           <button class="btn-quiet" id="replayBtn">もう一度聞く</button>
           <button class="btn-main" id="nextBtn">次へ</button>
         </div>
+      </div>
       </div>
     </div>
     <button class="btn-text" id="quitBtn">今日はここまでにする</button>
@@ -410,6 +428,21 @@ const STAGES=[
   {id:'s3',order:4,title:'型で増やせる',sub:'12の型に言葉を入れ替えて、300文にする',deck:'s3',goal:45},
   {id:'s4',order:5,title:'場面を通せる',sub:'店員役のAIと、注文から会計まで',locked:'準備中'}
 ];
+/* 画像は img/ に置く。無い場合は表示しないだけで動作は変わらない。 */
+const IMG_DIR='img/';
+const SCENE_IMG={'機内':'kinai','入国審査':'nyukoku','税関':'zeikan','空港':'kuko','カフェ':'cafe','食事':'shokuji','買い物':'kaimono','ホテル':'hotel','移動':'ido','困ったとき':'komatta','旅先で':'tabisaki','どこでも':'dokodemo'};
+const STAGE_IMG={s1:'stage-1',s2:'stage-2',s5:'stage-3',s3:'stage-4',s4:'stage-5'};
+const imgOk={};   // 一度読めた／読めなかった画像を覚える
+function setImg(el,name){
+  if(!name){ el.hidden=true; return; }
+  const src=IMG_DIR+name+'.png';
+  if(imgOk[src]===false){ el.hidden=true; return; }
+  el.onload=()=>{ imgOk[src]=true; el.hidden=false; };
+  el.onerror=()=>{ imgOk[src]=false; el.hidden=true; };
+  el.hidden=(imgOk[src]!==true);
+  if(el.getAttribute('src')!==src) el.src=src;
+}
+function sceneImgName(sceneLabel){ for(const k of Object.keys(SCENE_IMG)){ if(sceneLabel===k) return SCENE_IMG[k]; } return null; }
 const SCENE_GROUPS=[
   {name:'空港・機内',scenes:['機内','入国審査','税関','空港']},
   {name:'カフェ・食事',scenes:['カフェ','食事']},
@@ -549,10 +582,16 @@ function render(){
     }
     const badge = st.locked ? '<span class="badge soft">'+st.locked+'</span>'
                 : (st.id===rec_ ? '<span class="badge">次はここ</span>' : (st.rehearsal?'<span class="badge soft">旅の前日に</span>':''));
-    b.innerHTML='<span class="num">'+st.order+'</span><span class="body"><span class="ttl">'+st.title+badge+'</span><span class="sub">'+st.sub+'</span>'+bar+'</span><span class="cnt">'+cnt+'</span>';
+    b.innerHTML='<span class="iconwrap noimg"><img class="icon" alt="" hidden><span class="num">'+st.order+'</span></span><span class="body"><span class="ttl">'+st.title+badge+'</span><span class="sub">'+st.sub+'</span>'+bar+'</span><span class="cnt">'+cnt+'</span>';
+    const ic=b.querySelector('img.icon'), wrap=b.querySelector('.iconwrap');
+    ic.onload=()=>{ ic.hidden=false; wrap.classList.remove('noimg'); imgOk[ic.src]=true; };
+    ic.onerror=()=>{ ic.hidden=true; wrap.classList.add('noimg'); imgOk[ic.src]=false; };
+    ic.src=IMG_DIR+STAGE_IMG[st.id]+'.png';
     if(st.locked) b.disabled=true;
     map.appendChild(b);
   }
+
+  setImg($('hero'),'hero');
 
   // 査証欄（段階1）
   const visa=$('visa'); visa.textContent='';
@@ -599,7 +638,8 @@ function openPicker(){
   SCENE_GROUPS.forEach((g,gi)=>{
     const n=DECKS.s1.filter(c=>g.scenes.includes(c.s)).length;
     const l=document.createElement('label');
-    l.innerHTML='<input type="checkbox" value="'+gi+'"><span>'+g.name+'</span><small>'+n+' 文</small>';
+    l.innerHTML='<input type="checkbox" value="'+gi+'"><img class="pick-img" alt="" hidden><span>'+g.name+'</span><small>'+n+' 文</small>';
+    setImg(l.querySelector('img'), SCENE_IMG[g.scenes[0]]);
     box.appendChild(l);
   });
   $('pickStart').disabled=true;
@@ -617,6 +657,7 @@ function openCard(){
   $('dots').textContent='';
   for(let k=0;k<session.queue.length;k++){ const s=document.createElement('span'); if(k<=session.idx) s.className='on'; $('dots').appendChild(s); }
   $('scene').textContent=(session.stage.rehearsal?'リハーサル · ':'')+c.s;
+  setImg($('sceneImg'), sceneImgName(c.s) || (session.deck==='s3' ? 'kata' : null));
   $('situation').textContent=c.j;
   $('stageNote').textContent = c.h ? '相手の一言を聞いて、返します。文字は出しません。' : 'まず耳で覚えます。英文はまだ出しません。';
   $('playBtn').textContent = c.h ? '相手の言葉を聞く' : '聞く';
