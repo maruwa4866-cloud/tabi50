@@ -479,8 +479,8 @@ function render(){
 
 /* ---------- マイクが使えないとき ---------- */
 function blockMic(msg){
-  micState='blocked';
-  $('sayBtn').hidden=true;
+  micState='blocked'; holding=false;
+  $('sayBtn').hidden=true; $('sayBtn').classList.remove('hold');
   $('verdict').textContent='';
   $('blocker').innerHTML='<b>マイクが使えません。</b><br>'+esc(msg)+'<br>iPhone は Safari、Android は Chrome で、このページを直接開いてください。';
   $('blocker').hidden=false;
