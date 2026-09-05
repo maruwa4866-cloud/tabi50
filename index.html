@@ -542,7 +542,7 @@ function revealText(){
   $('revealBtn').hidden=true;
 }
 
-let holding=false, holdStart=0, holdTimer=null;
+let holding=false, holdAt=0;
 
 function listen(){
   const p=PHRASES[curId()];
@@ -640,14 +640,14 @@ function listen(){
 function holdStart(ev){
   if(ev && ev.preventDefault) ev.preventDefault();
   if(holding || $('sayBtn').disabled || $('sayBtn').hidden) return;
-  holding=true; holdStart=performance.now();
+  holding=true; holdAt=performance.now();
   try{ if(ev && ev.pointerId!==undefined) $('sayBtn').setPointerCapture(ev.pointerId); }catch(e){}
   listen();
 }
 function holdEnd(ev){
   if(!holding) return;
   holding=false;
-  const held=performance.now()-holdStart;
+  const held=performance.now()-holdAt;
   if(rec){
     if(held<MIN_HOLD_MS){ abortAttempt(); $('sayBtn').classList.remove('hold'); $('sayBtn').textContent='押しながら 話す'; $('verdict').innerHTML='<p>押している間だけ聞いています。押したまま話して、言い終わってから離してください。</p>'; return; }
     try{ rec.stop(); }catch(e){}
