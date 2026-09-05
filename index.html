@@ -79,6 +79,9 @@
   .listening{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--seal);margin-right:8px;animation:pulse 1s ease-in-out infinite}
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
   .heard{font-family:var(--en);color:var(--ink-soft)}
+  #sayBtn{touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+  #sayBtn.hold{animation:holdpulse 1s ease-in-out infinite;transform:scale(.98)}
+  @keyframes holdpulse{0%,100%{box-shadow:0 0 0 0 rgba(192,57,43,.45)}50%{box-shadow:0 0 0 12px rgba(192,57,43,0)}}
   .tries{display:flex;gap:7px;justify-content:center;margin-top:6px}
   .tries i{width:9px;height:9px;border-radius:50%;border:1.5px solid var(--line);display:block}
   .tries i.miss{background:var(--line)}
@@ -164,7 +167,7 @@
         </div>
         <p class="peek" id="peek" hidden></p>
         <div style="margin-top:9px">
-          <button class="btn-seal" id="sayBtn" disabled>言ってみる</button>
+          <button class="btn-seal" id="sayBtn" disabled>押しながら 話す</button>
         </div>
         <div class="verdict" id="verdict"></div>
         <div class="tries" id="tries"></div>
@@ -267,6 +270,8 @@ const INTERVALS=[1*DAY,3*DAY,7*DAY,14*DAY,30*DAY];
 const MAX_TRIES=4;        // これを超えたら今日は見送り（明日また出る）
 const HESITATE_MS=2500;   // 声が出るまでこれ以上かかったら「迷い」
 const MATCH_MIN=0.6;      // 目標文の単語のうち、この割合が聞き取れたら「通じた」
+const MIN_HOLD_MS=300;    // これより短い押下は「押し間違い」扱い
+const MAX_HOLD_MS=15000;  // 押しっぱなしの保険
 
 let state={cards:{},updatedAt:0};
 let session=null;
@@ -436,7 +441,7 @@ function show(which){
   scDone.hidden=which!=='done';
 }
 function abortAttempt(){
-  attemptToken++;
+  attemptToken++; holding=false;
   if(rec){ try{ rec.abort(); }catch(e){} rec=null; }
   stopAudio();
 }
@@ -515,7 +520,7 @@ function openCard(){
   $('slowBtn').disabled=true;
   $('sayBtn').disabled=true;
   $('sayBtn').hidden=(micState==='blocked');
-  $('sayBtn').textContent='言ってみる';
+  $('sayBtn').textContent='押しながら 話す'; $('sayBtn').classList.remove('hold');
   $('verdict').textContent='';
   $('peek').hidden=true; $('peek').textContent='';
   $('revealBtn').hidden=false;
@@ -537,6 +542,8 @@ function revealText(){
   $('revealBtn').hidden=true;
 }
 
+let holding=false, holdStart=0, holdTimer=null;
+
 function listen(){
   const p=PHRASES[curId()];
   const my=++attemptToken;
@@ -547,17 +554,17 @@ function listen(){
   catch(e){ blockMic('音声認識を起動できませんでした。'); return; }
   rec=r;
   r.lang='en-US';
-  r.continuous=false;
+  r.continuous=true;         // 無音で勝手に切らない。離した時に stop() する
   r.interimResults=true;     // 最初の中間結果で「声が出た時刻」を取るため
   r.maxAlternatives=5;
 
   const v=$('verdict');
-  v.innerHTML='<span class="listening"></span><p>聞いています。声に出してどうぞ。</p>';
-  $('sayBtn').disabled=true;
+  v.innerHTML='<span class="listening"></span><p>聞いています。言い終わったら指を離してください。</p>';
+  $('sayBtn').textContent='離すと判定';
+  $('sayBtn').classList.add('hold');
 
   let t0=performance.now(), tSpeech=null, best=0, bestText='', settled=false;
 
-  r.onaudiostart=()=>{ if(my===attemptToken) t0=performance.now(); };
   r.onspeechstart=()=>{ if(my===attemptToken && tSpeech===null) tSpeech=performance.now(); };
   r.onresult=ev=>{
     if(my!==attemptToken) return;
@@ -579,10 +586,11 @@ function listen(){
     const code=ev.error;
     if(code==='not-allowed'||code==='service-not-allowed'){ blockMic('マイクの使用が許可されていません。ブラウザの設定でこのページのマイクを「許可」にしてください。'); return; }
     if(code==='audio-capture'){ blockMic('マイクが見つかりませんでした。'); return; }
-    if(code==='no-speech'){ v.innerHTML='<p>声が聞こえませんでした。もう一度どうぞ。</p>'; $('sayBtn').disabled=false; return; }
-    if(code==='network'){ v.innerHTML='<p>認識サービスに届きませんでした。電波を確認して、もう一度。</p>'; $('sayBtn').disabled=false; return; }
+    $('sayBtn').classList.remove('hold'); $('sayBtn').textContent='もう一度 押しながら 話す';
+    if(code==='no-speech'){ v.innerHTML='<p>声が聞こえませんでした。押したまま話して、言い終わってから離してください。</p>'; return; }
+    if(code==='network'){ v.innerHTML='<p>認識サービスに届きませんでした。電波を確認して、もう一度。</p>'; return; }
     if(code==='aborted'){ return; }
-    v.innerHTML='<p>うまく聞き取れませんでした。もう一度どうぞ。</p>'; $('sayBtn').disabled=false;
+    v.innerHTML='<p>うまく聞き取れませんでした。もう一度どうぞ。</p>';
   };
   r.onend=()=>{
     if(my!==attemptToken || settled) return;
@@ -591,10 +599,12 @@ function listen(){
     rec=null;
     judge();
   };
-  const watchdog=setTimeout(()=>{ if(my===attemptToken && !settled){ try{ r.stop(); }catch(e){} } },9000);
+  const watchdog=setTimeout(()=>{ if(my===attemptToken && !settled){ try{ r.stop(); }catch(e){} } },MAX_HOLD_MS);
 
   function judge(){
-    if(!bestText){ v.innerHTML='<p>声が聞こえませんでした。もう一度どうぞ。</p>'; $('sayBtn').disabled=false; return; }
+    $('sayBtn').classList.remove('hold');
+    $('sayBtn').textContent='もう一度 押しながら 話す';
+    if(!bestText){ v.innerHTML='<p>声が聞こえませんでした。ボタンを押したまま話して、言い終わってから離してください。</p>'; return; }
     tries++;
     const lat = tSpeech!==null ? (tSpeech-t0) : null;
     const latS = lat!==null ? (lat/1000).toFixed(1) : null;
@@ -620,12 +630,28 @@ function listen(){
   function afterMiss(){
     if(tries>=MAX_TRIES){ giveUp(); return; }
     if(tries>=2) revealText();   // 2回外したら文字を見せる。見て言えれば、それでいい。
-    $('sayBtn').disabled=false;
-    $('sayBtn').textContent='もう一度 言ってみる';
   }
 
   try{ r.start(); }
-  catch(e){ v.innerHTML='<p>もう一度どうぞ。</p>'; $('sayBtn').disabled=false; }
+  catch(e){ v.innerHTML='<p>もう一度どうぞ。</p>'; $('sayBtn').classList.remove('hold'); $('sayBtn').textContent='押しながら 話す'; }
+}
+
+// 押している間だけマイク。離したら stop() → onend → 判定。
+function holdStart(ev){
+  if(ev && ev.preventDefault) ev.preventDefault();
+  if(holding || $('sayBtn').disabled || $('sayBtn').hidden) return;
+  holding=true; holdStart=performance.now();
+  try{ if(ev && ev.pointerId!==undefined) $('sayBtn').setPointerCapture(ev.pointerId); }catch(e){}
+  listen();
+}
+function holdEnd(ev){
+  if(!holding) return;
+  holding=false;
+  const held=performance.now()-holdStart;
+  if(rec){
+    if(held<MIN_HOLD_MS){ abortAttempt(); $('sayBtn').classList.remove('hold'); $('sayBtn').textContent='押しながら 話す'; $('verdict').innerHTML='<p>押している間だけ聞いています。押したまま話して、言い終わってから離してください。</p>'; return; }
+    try{ rec.stop(); }catch(e){}
+  }
 }
 
 function pass(lat){
@@ -684,12 +710,19 @@ $('playBtn').addEventListener('click',()=>{
     $('stageNote').textContent='このブラウザでは音が出せません。英文を見ながら声に出してください。';
     revealText();
   }else{
-    $('stageNote').textContent='聞こえたとおりに、まねして声に出します。';
+    $('stageNote').textContent='赤いボタンを押している間だけマイクがオンになります。押しながら言って、離す。';
   }
 });
 $('slowBtn').addEventListener('click',()=>speak(PHRASES[curId()].e,0.6));
 $('replayBtn').addEventListener('click',()=>speak(PHRASES[curId()].e,0.85));
-$('sayBtn').addEventListener('click',listen);
+const sayBtn=$('sayBtn');
+sayBtn.addEventListener('pointerdown',holdStart);
+sayBtn.addEventListener('pointerup',holdEnd);
+sayBtn.addEventListener('pointercancel',holdEnd);
+sayBtn.addEventListener('lostpointercapture',holdEnd);
+sayBtn.addEventListener('contextmenu',e=>e.preventDefault());
+sayBtn.addEventListener('keydown',e=>{ if((e.key===' '||e.key==='Enter')&&!e.repeat){ holdStart(e); } });
+sayBtn.addEventListener('keyup',e=>{ if(e.key===' '||e.key==='Enter'){ holdEnd(e); } });
 $('revealBtn').addEventListener('click',revealText);
 $('nextBtn').addEventListener('click',()=>{
   abortAttempt();
